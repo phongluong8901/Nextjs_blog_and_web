@@ -1,0 +1,55 @@
+- fontSize
+
+- icon
+
+- teamplate UI components
+
+- reduxtoolkit, redux: quan ly state global
+
+- ve chart
+
+- thoi gian
+
+- jwt-decode
+
+- i18net: da ngon ngu
+
+- scrollbar
+
+- style components
+
+- mui - material
+
+- next.d.ts: 
+
+- acl: phan quyen - role (client/admin)
+
+- auth: guard - acl(permission), auth(login, token), guest(khach - nologin,token)
+
+- fall-back
+
+- icon
+
+- toats
+
+- configs
+
+- context
+
+- layouts
+
+- theme
+
+- override
+
+- palette
+
+- shadows
+
+- spacing
+
+- fontSize
+
+- globalStyles
+
+- pages: _app, _document

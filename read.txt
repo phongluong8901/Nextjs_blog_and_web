@@ -1,0 +1,83 @@
+Quản trị hệ thống:
+
+Quản trị người dùng - User Management
+
+Quản trị nhóm vai trò
+
+Phân quyền cho user  - Thanh menu, page,...
+
+Quản trị sản phẩm (CMS):
+
+Quản lý danh mục sản phẩm
+
+Quản lý sản phẩm
+
+Quản trị bình luận
+
+Quản lý đơn hàng  (CMS):
+
+Quản lý đánh giá của sản phẩm
+
+Quản lý đơn hàng
+
+Cài đăt Settings (CMS):
+
+Quản lý phương thức thanh toán
+
+Quản lý phương thức giao hàng
+
+Quản lý danh sách thành phố
+
+Người dùng - Trang chủ - User (Landing page):
+
+Đăng nhập, Đăng ký
+
+Đăng nhập, Đăng ký với Next-Auth
+
+Quên mật khẩu
+
+Thay đổi mật khẩu
+
+Đăng xuất
+
+Tài khoản của tôi
+
+Đơn hàng của tôi
+
+Đánh giá sản phẩm
+
+Nhận thông báo (firebase cloud messenger)
+
+Sản phẩm của tôi
+
++ Sản phẩm đã xem
+
++ Sản phẩm đã thích
+
+Products (Landing page) :
+
+Phân trang sản phẩm
+
+Bộ lọc filter theo loại sản phẩm, đánh giá, vị trí, giá tiền
+
+Tìm kiếm sản phẩm
+
+Thanh toán
+
+Thích, bỏ thích sản phẩm
+
+Push notification (firebase)
+
+Bình luận sản phẩm (SocketIo)
+
+Tích hợp chatbotAI
+
+Đánh giá sản phẩm
+
+Dashboard
+
+Thống kê người
+
+Thống kê danh thu
+
+Thống kê sản phẩm

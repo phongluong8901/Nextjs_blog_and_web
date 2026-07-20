@@ -1,0 +1,50 @@
+#--- git
+https://github.com/khanhnttu/template-next-react
+https://api-shop-lks2.onrender.com/swagger/
+
+--- BE
+https://github.com/khanhnttu/API_SHOP
+
+--- FE
+https://github.com/khanhnttu/template-next-react
+
+--- install package BE
+git clone https://github.com/khanhnttu/API_SHOP
+
+cd API_SHOP
+yarn
+
+--- install package FE
+https://github.com/khanhnttu/template-next-react
+
+cd template-next-react
+yarn
+
+
+- install
+yarn add dotenv
+
+- mongo
+Condien123
+
+--- run
+- tao DB co san role va user (xoa Db tests truoc)
+yarn initDB
+
+- start
+yarn start
+
+
+--- api swagger
+http://localhost:3001/swagger/
+
+
+--- gui mail - nodemailer
+https://myaccount.google.com/apppasswords?pli=1&rapt=AEjHL4MF_XUopXqFqfng_coY-ZwHk8sYlUiPXnOqE_iCupKt4jvY9TEynwibeZ0vmTDO_-FmxaSwD4X8c-NeGXC2qcobIaoRq_LyVLDRZ89zRkptG3HYpuA
+tao mk ung dung
+
+--- deploy vercel
+
+
+
+

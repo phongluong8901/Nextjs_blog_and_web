@@ -1,0 +1,23 @@
+/* Thiết lập layout căn giữa và nền tối giản, hiện đại */
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 4rem 2rem;
+  background-color: #f9fafb; /* Màu nền xám nhạt dịu mắt */
+  color: #111827; /* Màu chữ chính tối */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Style cho tiêu đề chính */
+.main h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  margin-bottom: 2rem;
+  background: linear-gradient(to right, #2563eb, #3b82f6); /* Hiệu ứng chuyển màu chữ xanh dương */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

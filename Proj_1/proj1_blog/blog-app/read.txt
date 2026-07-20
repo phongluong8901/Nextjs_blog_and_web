@@ -1,0 +1,21 @@
+
+--- init
+yarn create next-app blog-app
+
+--- install
+yarn add mongoose
+
+--- pass
+Condien123
+
+--- run
+cd blog-app
+
+yarn dev
+
+
+
+
+
+
+
