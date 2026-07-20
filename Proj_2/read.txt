@@ -44,7 +44,21 @@ https://myaccount.google.com/apppasswords?pli=1&rapt=AEjHL4MF_XUopXqFqfng_coY-Zw
 tao mk ung dung
 
 --- deploy vercel
+https://vercel.com/phongluong8901s-projects/nextjs-blog-and-web/sReJksnVwXUmVaYRHVUvbz1SM9ZN
 
+--- CICD cho 
+cd template-next-react
 
+yarn global add vercel
+yarn global bin
 
+-> them vao env sys 
+C:\Users\mbw2025\AppData\Local\Yarn\bin
 
+vercel --version
+
+vercel login
+vercel link
+
+copy to github-ci-cd.yaml
+https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
