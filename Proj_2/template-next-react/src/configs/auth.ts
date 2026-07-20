@@ -5,3 +5,5 @@ export default {
   storageTokenKeyName: 'accessToken',
   onTokenExpiration: 'refreshToken' // logout | refreshToken
 }
+
+//test cicd vercel
