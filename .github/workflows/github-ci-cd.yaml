@@ -1,0 +1,36 @@
+name: Deploy Next.js Template to Vercel
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    # Chỉ kích hoạt CI/CD khi có thay đổi code trong folder template-next-react
+    paths:
+      - "Proj_2/template-next-react/**"
+
+jobs:
+  Deploy-Production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        working-directory: Proj_2/template-next-react
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        working-directory: Proj_2/template-next-react
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        working-directory: Proj_2/template-next-react
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
