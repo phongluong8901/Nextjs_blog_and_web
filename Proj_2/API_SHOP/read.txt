@@ -1,0 +1,3 @@
+#--- diagram
+index.js -> routes -> middleware -> controller -> services -> model
+

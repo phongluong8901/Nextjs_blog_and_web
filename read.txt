@@ -85,6 +85,8 @@ Thống kê sản phẩm
 #-----------
 
 
+#-----------
+
 ---
 git checkout -b after_setup_of_main
 git push -u origin after_setup_of_main
@@ -96,3 +98,6 @@ git commit -m "20/07/2026"
 git push -u origin master
 
 ---
+git add .
+git commit -m "change: login, singup"
+git push -u origin master
