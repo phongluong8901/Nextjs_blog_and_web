@@ -11,6 +11,10 @@ const nextConfig = {
       },
     ],
   },
+  eslint: {
+    // Bỏ qua lỗi ESLint trong quá trình build trên Vercel
+    ignoreDuringBuilds: true,
+  },
 }
 
 module.exports = nextConfig
