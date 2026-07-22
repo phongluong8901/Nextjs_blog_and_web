@@ -1,23 +1,25 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
+import Backend from 'i18next-http-backend'
 
-i18n
+const i18nInstance = i18n.createInstance()
 
-  // Enable automatic language detection
+i18nInstance
+  .use(Backend)
   .use(LanguageDetector)
-
-  // Enables the hook initialization module
   .use(initReactI18next)
   .init({
-    lng: 'en',
+    fallbackLng: 'vi',
     backend: {
-      /* translation file path */
       loadPath: '/locales/{{lng}}.json'
     },
-    fallbackLng: 'en',
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage']
+    },
     debug: false,
-    keySeparator: false,
+    keySeparator: '.', // Cho phép dùng dấu chấm để truy cập object lồng nhau
     react: {
       useSuspense: false
     },
@@ -27,4 +29,4 @@ i18n
     }
   })
 
-export default i18n
+export default i18nInstance

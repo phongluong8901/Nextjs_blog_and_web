@@ -1,4 +1,5 @@
 const User = require("../models/UserModel");
+const Role = require("../models/RoleModel");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("./JwtService");
 const {
@@ -28,10 +29,14 @@ const registerUser = (newUser) => {
           statusMessage: "Error",
         });
       }
+      // <-- 2. TÌM ROLE "BASIC" CÓ SẴN TRONG DATABASE
+      const defaultRole = await Role.findOne({ name: "Basic" });
+
       const hash = bcrypt.hashSync(password, 10);
       const createdUser = await User.create({
         email,
         password: hash,
+        role: defaultRole ? defaultRole._id : undefined,
         status: 1,
         userType: CONFIG_USER_TYPE.DEFAULT,
       });
@@ -49,6 +54,13 @@ const registerUser = (newUser) => {
     }
   });
 };
+
+// try { ... }: Khối code bên trong chứa các lệnh có nguy cơ xảy ra lỗi (ví dụ: kết nối cơ sở dữ liệu MongoDB bị rớt, truy vấn User.findOne bị lỗi mạng, hoặc lỗi ghi dữ liệu User.create).
+
+// catch (e) { ... }: Nếu bất kỳ câu lệnh nào bên trong khối try bị lỗi (ném ra ngoại lệ), chương trình sẽ ngay lập tức nhảy vào khối catch này. Biến e chính là đối tượng chứa thông tin chi tiết về lỗi đó.
+
+// reject(e): Vì hàm registerUser của bạn được bọc trong một new Promise, nên khi có lỗi xảy ra, hàm sẽ gọi reject(e) để báo hiệu cho nơi gọi hàm (controller hoặc router) biết rằng tiến trình đăng ký đã thất bại và truyền đối tượng lỗi e ra ngoài để xử lý tiếp (ví dụ: trả về status 500 cho client).
+
 
 const loginUser = (userLogin) => {
   return new Promise(async (resolve, reject) => {
@@ -140,12 +152,13 @@ const logoutUser = (res, accessToken) => {
   });
 };
 
-const updateAuthMe = (id, data, isPermission) => {
+
+const updateAuthMe = (id, data, file, isPermission) => {
   return new Promise(async (resolve, reject) => {
     try {
       const checkUser = await User.findOne({
         _id: id,
-      })
+      });
 
       if (!checkUser) {
         resolve({
@@ -175,6 +188,7 @@ const updateAuthMe = (id, data, isPermission) => {
           return;
         }
       }
+
       if (
         isAdminPermission(checkUser.permissions) &&
         (data.status !== checkUser.status || data.email !== checkUser.email)
@@ -205,23 +219,27 @@ const updateAuthMe = (id, data, isPermission) => {
         }
       }
 
-      if(data.city) {
-        checkUser.city = data.city
+      // Xử lý file ảnh từ Cloudinary (nếu có upload file mới)
+      if (file && file.path) {
+        checkUser.avatar = file.path;
+      } else if (data.avatar !== undefined) {
+        checkUser.avatar = data.avatar;
       }
 
-      if(data.role) {
-        checkUser.role = data.role
-      }
+      // Cập nhật các trường thông tin (Dùng điều kiện để không bị mất dữ liệu cũ & bỏ gán rỗng phoneNumber)
+      if (data.firstName !== undefined) checkUser.firstName = data.firstName;
+      if (data.lastName !== undefined) checkUser.lastName = data.lastName;
+      if (data.middleName !== undefined) checkUser.middleName = data.middleName;
+      if (data.phoneNumber !== undefined) checkUser.phoneNumber = data.phoneNumber;
+      if (data.address !== undefined) checkUser.address = data.address;
+      
+      if (data.email) checkUser.email = data.email;
+      if (data.city) checkUser.city = data.city;
+      if (data.role) checkUser.role = data.role;
+      if (data.addresses) checkUser.addresses = data.addresses;
 
-      checkUser.firstName =data.firstName
-      checkUser.lastName =data.lastName
-      checkUser.middleName =data.middleName
-      checkUser.email =data.email || checkUser.email
-      checkUser.phoneNumber = ""
-      checkUser.avatar =data.avatar
-      checkUser.address =data.address
-      checkUser.addresses =data.addresses || checkUser.addresses
-      await checkUser.save()
+      await checkUser.save();
+      await checkUser.populate('role'); // Populate luôn role để trả về frontend hiển thị tên role chuẩn
 
       resolve({
         status: CONFIG_MESSAGE_ERRORS.ACTION_SUCCESS.status,
@@ -738,5 +756,5 @@ module.exports = {
   loginFacebook,
   loginGoogle,
   registerUser,
-  updateDeviceToken
+  updateDeviceToken,
 };

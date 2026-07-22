@@ -30,3 +30,48 @@ my-project/
         └── pages/
             └── login/
                 └── index.tsx  --> Component giao diện (LoginPage)
+
+
+-------- redux thunk
+Redux Thunk là một middleware phổ biến trong Redux (được tích hợp sẵn trong Redux Toolkit qua hàm configureStore), dùng để giải quyết một bài toán cốt lõi: Xử lý các tác vụ bất đồng bộ (như gọi API, lấy dữ liệu, setTimeout, v.v.) bên trong Redux.
+
+Tại sao lại cần Redux Thunk?
+Mặc định, các Redux reducer phải là hàm thuần túy (pure functions): chỉ nhận vào state và action, sau đó trả về state mới mà tuyệt đối không được chứa code bất đồng bộ (như gọi axios.get, fetch, đọc ghi file trực tiếp tại thời điểm reduce) hay tạo side effects.
+
+Tuy nhiên, trong ứng dụng thực tế, bạn luôn phải gọi API để lấy dữ liệu từ server rồi mới cập nhật vào Redux Store. Redux Thunk sinh ra để làm chiếc cầu nối đó.
+
+--- tai sao la redux ma khong phai localstore
+Câu hỏi rất hay! Tại sao khi thay đổi thông tin profile (hoặc trạng thái đăng nhập) xong, người ta thường đưa vào Redux (hoặc Context API / Zustand) chứ không chỉ lưu mỗi vào localStorage?
+
+Sự khác biệt cốt lõi nằm ở khả năng phản ứng tự động của giao diện (Reactivity) và Phạm vi lưu trữ:
+
+1. Vấn đề của localStorage (Tại sao nó không tự đổi giao diện?)
+localStorage giống như một cái ổ cứng tĩnh nằm trong trình duyệt. Nó chỉ là nơi cất giữ dữ liệu dưới dạng chuỗi (string) để không bị mất khi F5 lại trang.
+
+Điểm yếu chết người: localStorage không có cơ chế lắng nghe thay đổi (reactive). Khi bạn dùng câu lệnh localStorage.setItem('user', JSON.stringify(newData)) ở trang Profile, các component khác ở các trang khác (ví dụ như cái Avatar hay Tên ở Header, Sidebar) sẽ không hề hay biết là dữ liệu đã thay đổi.
+
+Kết quả: Header vẫn giữ nguyên hình ảnh và tên cũ. Người dùng phải bấm F5 (tải lại trang) thì trình duyệt mới đọc lại localStorage và cập nhật giao diện. Trải nghiệm này bị giật cục, không mượt mà.
+
+2. Sức mạnh của Redux / Global State (Tại sao nên dùng?)
+Cơ chế phản ứng (Reactivity): Redux quản lý dữ liệu trên bộ nhớ RAM của trình duyệt. Khi bạn gọi hành động cập nhật state (dispatch) dữ liệu mới vào Redux, tất cả các component đang kết nối với Redux (như Header, Sidebar, trang Profile...) sẽ lập tức nhận được tín hiệu, tự động render lại (re-render) để hiển thị dữ liệu mới ngay giây phút đó mà không cần F5.
+
+Quản lý tập trung: Giúp bạn kiểm soát rõ ràng dữ liệu người dùng đang đứng ở trạng thái nào (đã đăng nhập chưa, role gì, token là gì) xuyên suốt toàn bộ vòng đời của ứng dụng.
+
+
+--- tai sao get Auth Me cung dung redux
+Việc đưa cả lệnh GET (lấy dữ liệu như getAuthMe) vào Redux thay vì chỉ gọi trực tiếp bằng useEffect ở từng component mang lại những lợi ích cực kỳ lớn sau:
+
+1. Đồng bộ hóa dữ liệu toàn cục (Single Source of Truth)
+Khi bạn lấy thông tin user thông qua Redux, dữ liệu user đó sẽ được lưu ở kho chứa chung của toàn ứng dụng.
+
+Bất kỳ component nào (Trang MyProfile, Component Header hiển thị avatar, Component Sidebar hiển thị tên, hay trang quản trị...) cũng đều có thể đọc chung một nguồn dữ liệu này mà không cần phải gọi lại API nhiều lần.
+
+2. Tránh việc gọi API lặp lại (Trùng lặp request)
+Nếu mỗi trang tự gọi một kiểu bằng useEffect riêng, khi người dùng chuyển qua lại giữa các trang (từ trang chủ sang trang Profile, rồi sang trang Cài đặt...), ứng dụng sẽ phải gọi lại API getMe liên tục rất tốn resource và chậm.
+
+Khi đưa vào Redux, bạn chỉ cần gọi 1 lần (ví dụ lúc app vừa khởi động hoặc lúc mới đăng nhập xong), các trang sau chỉ việc lấy dữ liệu từ Redux ra dùng, giao diện hiện lên ngay lập tức mà không có độ trễ chờ đợi mạng.
+
+3. Quản lý trạng thái tải (Loading) và Lỗi (Error) tập trung
+Redux hỗ trợ sẵn các trạng thái pending (đang tải), fulfilled (thành công), rejected (thất bại).
+
+Bạn có thể dễ dàng hiển thị khung Skeleton loading hoặc vòng quay xoay vòng (Spinner) ở bất cứ đâu trong app khi Redux đang ở trạng thái loading = true.

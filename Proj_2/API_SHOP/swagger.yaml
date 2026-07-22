@@ -7,7 +7,8 @@ info:
     email: lttd0204@gmail.com
   version: 1.0.11
 servers:
-  - url: https://api-shop-lks2.onrender.com/
+  # - url: https://api-shop-lks2.onrender.com/
+    - url: http://localhost:3001
 tags:
   - name: auth
     description: Everything about auth

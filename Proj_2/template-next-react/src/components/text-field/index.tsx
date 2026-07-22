@@ -1,9 +1,10 @@
+// ** React Imports
+import { forwardRef } from 'react'
+
 // ** Text-field Imports
 import { styled, TextField, TextFieldProps } from "@mui/material"
 
 const TextFiledStyled = styled(TextField)<TextFieldProps>(({ theme }) => {
-//   console.log("themee", { theme })
-
   return {
     "& .MuiInputLabel-root": {
       transform: "none",
@@ -21,7 +22,6 @@ const TextFiledStyled = styled(TextField)<TextFieldProps>(({ theme }) => {
         duration: theme.transitions.duration.shorter,
       }),
 
-      // --- PHẦN THÊM TỪ ẢNH ---
       "&.Mui-focused": {
         boxShadow: theme.shadows[2],
         "& .MuiInputBase-input:not(.MuiInputBase-readOnly):not([readonly])::placeholder": {
@@ -60,17 +60,20 @@ const TextFiledStyled = styled(TextField)<TextFieldProps>(({ theme }) => {
   }
 })
 
-const CustomTextField = (props: TextFieldProps) => {
+const CustomTextField = forwardRef((props: TextFieldProps, ref) => {
   const { size = "small", InputLabelProps, variant = "filled", ...rests } = props
 
   return (
     <TextFiledStyled
       size={size}
       variant={variant}
+      inputRef={ref}
       InputLabelProps={{ shrink: true, ...InputLabelProps }}
       {...rests}
     />
   )
-}
+})
+
+CustomTextField.displayName = 'CustomTextField'
 
 export default CustomTextField

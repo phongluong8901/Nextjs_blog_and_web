@@ -192,13 +192,17 @@ const getAuthMe = async (req, res) => {
   }
 };
 
+
 const updateAuthMe = async (req, res) => {
   try {
     const userId = req.userId;
     const isPermission = req.isPermission;
+    const file = req.file;
+
     const response = await AuthService.updateAuthMe(
       userId,
       req.body,
+      file,
       isPermission
     );
     const { data, status, typeError, message, statusMessage } = response;
@@ -493,5 +497,5 @@ module.exports = {
   registerFacebook,
   loginGoogle,
   loginFacebook,
-  updateDeviceToken
+  updateDeviceToken,
 };

@@ -101,3 +101,9 @@ git push -u origin master
 git add .
 git commit -m "change: login, singup"
 git push -u origin master
+
+---
+git checkout -b 22/07/2026
+git add .
+git commit -m "change: theme, lng, my-profile, forgot-password"
+git push -u origin 22/07/2026

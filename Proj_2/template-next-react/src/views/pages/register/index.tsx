@@ -4,6 +4,11 @@ import React, { useState } from 'react'
 import { NextPage } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
+
+// ** Import Redux Hooks & Actions
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from 'src/stores'
 
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
@@ -30,6 +35,8 @@ import {
     Card as MuiCard,
     styled,
     useTheme,
+    CircularProgress,
+    Fade,
 } from '@mui/material'
 
 // ** Import Custom Component TextField
@@ -38,10 +45,7 @@ import CustomTextField from 'src/components/text-field'
 // ** Import ảnh Light / Dark Mode cho Register
 import RegisterDark from '/public/images/register-dark.png'
 import RegisterLight from '/public/images/register-light.png'
-
-// ==========================================
-// 1. STYLED COMPONENTS
-// ==========================================
+import { registerUser } from 'src/stores/apps/auth/actions'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -60,9 +64,6 @@ const MainStackedCard = styled(MuiCard)(({ theme }) => ({
 
 type TProps = {}
 
-// ==========================================
-// 2. VALIDATION SCHEMA DÀNH CHO REGISTER
-// ==========================================
 const schema = yup.object().shape({
     fullName: yup.string().required('Please enter your full name.'),
     email: yup
@@ -84,14 +85,19 @@ const schema = yup.object().shape({
 
 type TFormData = yup.InferType<typeof schema>
 
-// ==========================================
-// 3. MAIN COMPONENT (REGISTER PAGE)
-// ==========================================
 const RegisterPage: NextPage<TProps> = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+    const [openAlert, setOpenAlert] = useState(false)
+    const [alertMessage, setAlertMessage] = useState('')
+    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
+
+    const router = useRouter()
     const theme = useTheme()
+    const dispatch = useDispatch<AppDispatch>()
+
+    const { loading } = useSelector((state: RootState) => state.auth)
 
     const {
         control,
@@ -109,8 +115,34 @@ const RegisterPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
-    const onSubmit = (data: TFormData) => {
-        console.log('Register Submit Data:', data)
+    const onSubmit = async (data: TFormData) => {
+        const payload = {
+            fullName: data.fullName,
+            email: data.email,
+            password: data.password,
+        }
+
+        const resultAction = await dispatch(registerUser(payload))
+
+        if (registerUser.fulfilled.match(resultAction)) {
+            setAlertSeverity('success')
+            setAlertMessage('Đăng ký tài khoản thành công! Đang chuyển hướng...')
+            setOpenAlert(true)
+
+            setTimeout(() => {
+                router.push('/login')
+            }, 1500)
+        } else {
+            const errorMessage = (resultAction.payload as any)?.message || 'Đăng ký thất bại. Vui lòng thử lại!'
+            setAlertSeverity('error')
+            setAlertMessage(errorMessage)
+            setOpenAlert(true)
+
+            // Tự tắt sau 4 giây
+            setTimeout(() => {
+                setOpenAlert(false)
+            }, 4000)
+        }
     }
 
     const handleGoogleRegister = () => {
@@ -121,8 +153,7 @@ const RegisterPage: NextPage<TProps> = () => {
         console.log('Register with Facebook')
     }
 
-    const imageSource =
-        theme.palette.mode === 'dark' ? RegisterDark : RegisterLight
+    const imageSource = theme.palette.mode === 'dark' ? RegisterDark : RegisterLight
 
     return (
         <Box
@@ -135,21 +166,60 @@ const RegisterPage: NextPage<TProps> = () => {
                 backgroundColor: theme.palette.background.default,
                 padding: { xs: 2, sm: 3, md: 4 },
                 overflow: 'hidden',
+                position: 'relative',
             }}
         >
+            {/* Custom Toast thay thế Snackbar/Alert để tránh hoàn toàn lỗi từ core theme */}
+            <Fade in={openAlert}>
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 24,
+                        right: 24,
+                        zIndex: 9999,
+                        display: openAlert ? 'flex' : 'none',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        padding: '14px 20px',
+                        backgroundColor: alertSeverity === 'success' ? '#2e7d32' : '#d32f2f',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        minWidth: '280px',
+                    }}
+                >
+                    <Icon
+                        icon={
+                            alertSeverity === 'success'
+                                ? 'mdi:check-circle-outline'
+                                : 'mdi:alert-circle-outline'
+                        }
+                        width={22}
+                        height={22}
+                    />
+                    <Box sx={{ flex: 1 }}>{alertMessage}</Box>
+                    <IconButton
+                        size="small"
+                        onClick={() => setOpenAlert(false)}
+                        sx={{ color: '#fff', padding: '2px' }}
+                    >
+                        <Icon icon="mdi:close" width={18} height={18} />
+                    </IconButton>
+                </Box>
+            </Fade>
+
             <MainStackedCard>
-                {/* KHỐI ẢNH BÊN TRÁI */}
                 <Box
                     sx={{
                         flex: { xs: '0 0 0%', sm: '1 1 45%', md: '1 1 55%' },
                         display: { xs: 'none', sm: 'flex' },
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor:
-                            theme.palette.customColors?.bodyBg || theme.palette.action.hover,
+                        backgroundColor: theme.palette.action.hover,
                         padding: 4,
                         position: 'relative',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
                     <Box
@@ -171,7 +241,6 @@ const RegisterPage: NextPage<TProps> = () => {
                     </Box>
                 </Box>
 
-                {/* KHỐI FORM BÊN PHẢI */}
                 <Box
                     sx={{
                         flex: { xs: '1 1 100%', sm: '1 1 55%', md: '1 1 45%' },
@@ -182,7 +251,6 @@ const RegisterPage: NextPage<TProps> = () => {
                         padding: { xs: 3, sm: 4, md: 5 },
                         backgroundColor: theme.palette.background.paper,
                         overflowY: 'auto',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
                     <Box sx={{ width: '100%', maxWidth: '400px' }}>
@@ -206,7 +274,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                 mt: 2,
                             }}
                         >
-                            {/* FULL NAME */}
                             <FormControl fullWidth error={Boolean(errors.fullName)}>
                                 <FormLabel htmlFor="fullName">Full Name</FormLabel>
                                 <Controller
@@ -227,7 +294,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                 />
                             </FormControl>
 
-                            {/* EMAIL */}
                             <FormControl fullWidth error={Boolean(errors.email)}>
                                 <FormLabel htmlFor="email">Email</FormLabel>
                                 <Controller
@@ -249,7 +315,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                 />
                             </FormControl>
 
-                            {/* PASSWORD */}
                             <FormControl fullWidth error={Boolean(errors.password)}>
                                 <FormLabel htmlFor="password">Password</FormLabel>
                                 <Controller
@@ -273,7 +338,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                                             edge="end"
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             onMouseDown={(e) => e.preventDefault()}
-                                                            aria-label="toggle password visibility"
                                                         >
                                                             <Icon
                                                                 icon={
@@ -291,11 +355,8 @@ const RegisterPage: NextPage<TProps> = () => {
                                 />
                             </FormControl>
 
-                            {/* CONFIRM PASSWORD */}
                             <FormControl fullWidth error={Boolean(errors.confirmPassword)}>
-                                <FormLabel htmlFor="confirmPassword">
-                                    Confirm Password
-                                </FormLabel>
+                                <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
                                 <Controller
                                     name="confirmPassword"
                                     control={control}
@@ -315,11 +376,8 @@ const RegisterPage: NextPage<TProps> = () => {
                                                     <InputAdornment position="end">
                                                         <IconButton
                                                             edge="end"
-                                                            onClick={() =>
-                                                                setShowConfirmPassword(!showConfirmPassword)
-                                                            }
+                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                             onMouseDown={(e) => e.preventDefault()}
-                                                            aria-label="toggle confirm password visibility"
                                                         >
                                                             <Icon
                                                                 icon={
@@ -337,7 +395,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                 />
                             </FormControl>
 
-                            {/* TERMS & CONDITIONS CHECKBOX */}
                             <Controller
                                 name="terms"
                                 control={control}
@@ -374,15 +431,20 @@ const RegisterPage: NextPage<TProps> = () => {
                                 )}
                             />
 
-                            {/* NÚT SUBMIT REGISTER */}
-                            <Button type="submit" fullWidth variant="contained" size="large">
-                                Sign up
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                disabled={loading}
+                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                            >
+                                {loading ? 'Signing up...' : 'Sign up'}
                             </Button>
                         </Box>
 
                         <Divider sx={{ my: 2.5 }}>or sign up with</Divider>
 
-                        {/* NÚT SOCIAL REGISTER */}
                         <Box
                             sx={{
                                 display: 'flex',
@@ -397,7 +459,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                     border: `1px solid ${theme.palette.divider}`,
                                     borderRadius: '12px',
                                     padding: '10px 18px',
-                                    transition: 'all 0.2s',
                                     '&:hover': {
                                         backgroundColor: theme.palette.action.hover,
                                         borderColor: theme.palette.text.secondary,
@@ -413,7 +474,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                     border: `1px solid ${theme.palette.divider}`,
                                     borderRadius: '12px',
                                     padding: '10px 18px',
-                                    transition: 'all 0.2s',
                                     '&:hover': {
                                         backgroundColor: theme.palette.action.hover,
                                         borderColor: theme.palette.text.secondary,
@@ -424,7 +484,6 @@ const RegisterPage: NextPage<TProps> = () => {
                             </IconButton>
                         </Box>
 
-                        {/* LOGIN REDIRECT */}
                         <Box
                             sx={{
                                 display: 'flex',

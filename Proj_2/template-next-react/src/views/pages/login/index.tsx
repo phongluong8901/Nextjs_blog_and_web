@@ -1,9 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 // ** Import các utilities từ Next.js
 import { NextPage } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
+
+// ** Import Redux hooks & actions
+import { useSelector, useDispatch } from 'react-redux'
+import { RootState, AppDispatch } from 'src/stores'
+import { clearRegisteredCredentials } from 'src/stores/apps/auth'
 
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
@@ -29,6 +35,9 @@ import {
     Card as MuiCard,
     styled,
     useTheme,
+    CircularProgress,
+    Snackbar,
+    Alert,
 } from '@mui/material'
 
 // ** Import Custom Component TextField do mình định nghĩa
@@ -38,11 +47,7 @@ import CustomTextField from 'src/components/text-field'
 import LoginDark from '/public/images/login-dark.png'
 import LoginLight from '/public/images/login-light.png'
 import CustomCarousel from 'src/components/component_path/ImageCarousel'
-import ShopifyBackground from 'src/components/component_path/ShopifyBackground'
-
-// ==========================================
-// 1. KHOẢNG STYLED COMPONENTS
-// ==========================================
+import { useAuth } from 'src/hooks/useAuth'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -59,7 +64,6 @@ const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     position: 'relative',
 }))
 
-// Tạo mảng dữ liệu slide
 const slideItems = [
     {
         title: 'Efficient Workflow Management',
@@ -80,9 +84,6 @@ const slideItems = [
 
 type TProps = {}
 
-// ==========================================
-// 2. VALIDATION SCHEMA
-// ==========================================
 const schema = yup.object().shape({
     email: yup
         .string()
@@ -97,18 +98,27 @@ const schema = yup.object().shape({
 
 type TFormData = yup.InferType<typeof schema>
 
-// ==========================================
-// 3. MAIN COMPONENT
-// ==========================================
 const LoginPage: NextPage<TProps> = () => {
     const [open, setOpen] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const [openAlert, setOpenAlert] = useState(false)
+    const [alertMessage, setAlertMessage] = useState('')
+    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
 
     const theme = useTheme()
+    const router = useRouter()
+    const dispatch = useDispatch<AppDispatch>()
+    const { login } = useAuth()
+
+    // Lấy thông tin tài khoản vừa đăng ký từ Redux store
+    const authState = useSelector((state: RootState) => state.auth)
 
     const {
         control,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<TFormData>({
         defaultValues: {
@@ -120,11 +130,46 @@ const LoginPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
+    // Tự động điền email và password từ Redux store khi chuyển trang từ Register sang
+    useEffect(() => {
+        if (authState.registeredEmail) {
+            setValue('email', authState.registeredEmail, { shouldValidate: true, shouldDirty: true })
+        }
+        if (authState.registeredPassword) {
+            setValue('password', authState.registeredPassword, { shouldValidate: true, shouldDirty: true })
+        }
+
+        // Xóa sạch sau khi đã điền xong để F5 lại trang không bị điền lại nữa
+        return () => {
+            if (authState.registeredEmail) {
+                dispatch(clearRegisteredCredentials())
+            }
+        }
+    }, [authState.registeredEmail, authState.registeredPassword, setValue, dispatch])
+
     const handleClickOpen = () => setOpen(true)
-    const handleClose = () => setOpen(false)
+    const handleCloseAlert = (_event?: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') return
+        setOpenAlert(false)
+    }
 
     const onSubmit = (data: TFormData) => {
-        console.log('Form Submit Data:', data)
+        setLoading(true)
+        login(
+            {
+                email: data.email,
+                password: data.password,
+                rememberMe: data.remember,
+            },
+            (err) => {
+                setLoading(false)
+                if (err) {
+                    setAlertSeverity('error')
+                    setAlertMessage(err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
+                    setOpenAlert(true)
+                }
+            }
+        )
     }
 
     const handleGoogleLogin = () => {
@@ -150,8 +195,18 @@ const LoginPage: NextPage<TProps> = () => {
                 overflow: 'hidden',
             }}
         >
+            <Snackbar
+                open={openAlert}
+                autoHideDuration={4000}
+                onClose={handleCloseAlert}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert onClose={handleCloseAlert} severity={alertSeverity} sx={{ width: '100%' }}>
+                    {alertMessage}
+                </Alert>
+            </Snackbar>
+
             <MainStackedCard>
-                {/* KHỐI BÊN TRÁI: DẠNG CỘT */}
                 <Box
                     sx={{
                         flex: { xs: '0 0 0%', sm: '1 1 45%', md: '1 1 55%' },
@@ -161,10 +216,8 @@ const LoginPage: NextPage<TProps> = () => {
                             theme.palette.customColors?.bodyBg || theme.palette.action.hover,
                         padding: 3,
                         position: 'relative',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
-                    {/* KHỐI ẢNH PHÍA TRÊN (~65% CHIỀU CAO) */}
                     <Box
                         sx={{
                             flex: '0 0 65%',
@@ -185,7 +238,6 @@ const LoginPage: NextPage<TProps> = () => {
                         />
                     </Box>
 
-                    {/* KHỐI CAROUSEL PHÍA DƯỚI (~35% CHIỀU CAO) */}
                     <Box
                         sx={{
                             flex: '0 0 35%',
@@ -200,7 +252,7 @@ const LoginPage: NextPage<TProps> = () => {
                         <CustomCarousel items={slideItems} autoPlay={true} autoPlayInterval={4000} />
                     </Box>
                 </Box>
-                {/* KHỐI FORM BÊN PHẢI */}
+
                 <Box
                     sx={{
                         flex: { xs: '1 1 100%', sm: '1 1 55%', md: '1 1 45%' },
@@ -211,7 +263,6 @@ const LoginPage: NextPage<TProps> = () => {
                         padding: { xs: 3, sm: 4, md: 5 },
                         backgroundColor: theme.palette.background.paper,
                         overflowY: 'auto',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
                     <Box sx={{ width: '100%', maxWidth: '400px' }}>
@@ -235,7 +286,6 @@ const LoginPage: NextPage<TProps> = () => {
                                 mt: 2,
                             }}
                         >
-                            {/* EMAIL */}
                             <FormControl fullWidth error={Boolean(errors.email)}>
                                 <FormLabel htmlFor="email">Email</FormLabel>
                                 <Controller
@@ -252,13 +302,11 @@ const LoginPage: NextPage<TProps> = () => {
                                             fullWidth
                                             error={Boolean(errors.email)}
                                             helperText={errors.email?.message}
-                                            color={errors.email ? 'error' : 'primary'}
                                         />
                                     )}
                                 />
                             </FormControl>
 
-                            {/* PASSWORD */}
                             <FormControl fullWidth error={Boolean(errors.password)}>
                                 <FormLabel htmlFor="password">Password</FormLabel>
                                 <Controller
@@ -274,7 +322,6 @@ const LoginPage: NextPage<TProps> = () => {
                                             fullWidth
                                             error={Boolean(errors.password)}
                                             helperText={errors.password?.message}
-                                            color={errors.password ? 'error' : 'primary'}
                                             InputProps={{
                                                 endAdornment: (
                                                     <InputAdornment position="end">
@@ -282,7 +329,6 @@ const LoginPage: NextPage<TProps> = () => {
                                                             edge="end"
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             onMouseDown={(e) => e.preventDefault()}
-                                                            aria-label="toggle password visibility"
                                                         >
                                                             <Icon
                                                                 icon={
@@ -300,7 +346,6 @@ const LoginPage: NextPage<TProps> = () => {
                                 />
                             </FormControl>
 
-                            {/* REMEMBER ME */}
                             <Controller
                                 name="remember"
                                 control={control}
@@ -319,18 +364,22 @@ const LoginPage: NextPage<TProps> = () => {
                                 )}
                             />
 
-                            {/* NÚT SUBMIT */}
-                            <Button type="submit" fullWidth variant="contained" size="large">
-                                Sign in
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                disabled={loading}
+                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                            >
+                                {loading ? 'Signing in...' : 'Sign in'}
                             </Button>
 
-                            {/* FORGOT PASSWORD */}
                             <MuiLink
-                                component="button"
-                                type="button"
-                                onClick={handleClickOpen}
+                                component={Link}
+                                href="/forgot-password"
                                 variant="body2"
-                                sx={{ alignSelf: 'center' }}
+                                sx={{ alignSelf: 'center', fontWeight: 600, textDecoration: 'none' }}
                             >
                                 Forgot your password?
                             </MuiLink>
@@ -338,7 +387,6 @@ const LoginPage: NextPage<TProps> = () => {
 
                         <Divider sx={{ my: 2.5 }}>or sign in with</Divider>
 
-                        {/* NÚT SOCIAL LOGIN */}
                         <Box
                             sx={{
                                 display: 'flex',
@@ -353,7 +401,6 @@ const LoginPage: NextPage<TProps> = () => {
                                     border: `1px solid ${theme.palette.divider}`,
                                     borderRadius: '12px',
                                     padding: '10px 18px',
-                                    transition: 'all 0.2s',
                                     '&:hover': {
                                         backgroundColor: theme.palette.action.hover,
                                         borderColor: theme.palette.text.secondary,
@@ -369,7 +416,6 @@ const LoginPage: NextPage<TProps> = () => {
                                     border: `1px solid ${theme.palette.divider}`,
                                     borderRadius: '12px',
                                     padding: '10px 18px',
-                                    transition: 'all 0.2s',
                                     '&:hover': {
                                         backgroundColor: theme.palette.action.hover,
                                         borderColor: theme.palette.text.secondary,
@@ -380,7 +426,6 @@ const LoginPage: NextPage<TProps> = () => {
                             </IconButton>
                         </Box>
 
-                        {/* REGISTER REDIRECT */}
                         <Box
                             sx={{
                                 display: 'flex',
