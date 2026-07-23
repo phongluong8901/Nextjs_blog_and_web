@@ -1,0 +1,29 @@
+1. auth/actions.ts (Nơi gọi API)
+File này dùng để chứa các AsyncThunk (hành động bất đồng bộ gọi API). Thay vì viết trực tiếp hàm gọi axios trong component, bạn gom hết vào đây:
+
+registerUser: Gọi API đăng ký.
+
+loginUser: Gọi API đăng nhập.
+
+updateAuthMeAsync: Gọi API cập nhật thông tin user (đổi tên, đổi ảnh...).
+
+getAuthMeAsync: Gọi API lấy thông tin user hiện tại.
+
+2. auth/index.ts (Bộ não quản lý state phần Auth)
+File này là Redux Slice chuyên quản lý trạng thái đăng nhập, thông tin user, token của tài khoản hiện tại:
+
+initialState: Khai báo trạng thái ban đầu (user: null, token: null, loading: false,...).
+
+reducers: Các hàm đồng bộ xử lý ngay lập tức trong local store, ví dụ hàm logout sẽ reset sạch user = null, token = null để dọn sạch dữ liệu khi đăng xuất.
+
+extraReducers: Lắng nghe kết quả từ các API trong file auth/actions.ts. Ví dụ khi gọi API loginUser thành công (fulfilled), nó sẽ tự động lưu user và token vào kho Redux store.
+
+3. user/index.ts (Quản lý danh sách User - Quản trị viên)
+File này cũng là một Slice nhưng không liên quan đến Auth cá nhân mà dùng cho trang quản lý danh sách người dùng (thường nằm ở trang Admin để quản trị viên xem, thêm, xóa các user khác):
+
+fetchData: Gọi API lấy danh sách toàn bộ user kèm phân trang, tìm kiếm.
+
+addUser / deleteUser: Gọi API thêm hoặc xóa một user nào đó, sau đó tự động gọi lại hàm fetchData để làm mới danh sách hiển thị trên bảng (table).
+
+4. index cha (store.ts - Tổng kho Redux Store)
+File này là nơi gom tất cả các Slice con lại để tạo thành một kho tổng (Store) cho toàn bộ ứng dụng Next.js:

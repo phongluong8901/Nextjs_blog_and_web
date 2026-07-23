@@ -17,13 +17,17 @@ import { Icon } from '@iconify/react'
 
 // ** Third Party Imports
 import { useTranslation } from 'react-i18next'
+import { useDispatch } from 'react-redux'
 
-// ** Hooks (Tuỳ dự án ông dùng useAuth từ Context hay useSelector từ Redux, ở đây tôi dùng useAuth chuẩn template)
+// ** Hooks & Redux Actions
 import { useAuth } from 'src/hooks/useAuth'
 import { useSettings } from 'src/hooks/useSettings'
+import { logout as clearAuthRedux } from 'src/stores/apps/auth'
 
 const UserDropdown = () => {
-    const { user, logout } = useAuth()
+    // 💡 Lấy cả user và setUser từ AuthContext để đồng bộ dữ liệu chuẩn xác nhất
+    const { user, setUser, logout } = useAuth()
+    const dispatch = useDispatch()
     const { settings } = useSettings()
     const router = useRouter()
     const { t } = useTranslation()
@@ -41,7 +45,8 @@ const UserDropdown = () => {
 
     const handleLogout = () => {
         handleClose()
-        logout()
+        dispatch(clearAuthRedux()) // Xóa sạch dữ liệu user cũ trong Redux State
+        logout()                   // Xóa token localStorage & đá về trang login (của AuthContext)
     }
 
     // Map màu nền cho avatar fallback nếu chưa có ảnh
@@ -64,16 +69,19 @@ const UserDropdown = () => {
     // XỬ LÝ LẤY VÀ FORMAT ĐƯỜNG DẪN ẢNH AVATAR
     // ==========================================
     const rawAvatar = uAny?.avatar || uAny?.image || uAny?.profilePicture || ''
-    const apiHostname = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000' // Thay bằng URL API của ông nếu cần
+    const apiHostname = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
     let userAvatar = ''
     if (rawAvatar) {
+        // Thêm timestamp để ép trình duyệt load ảnh mới ngay lập tức khi đổi avatar
+        const timestamp = typeof window !== 'undefined' ? (uAny?.updatedAt || new Date().getTime()) : ''
+
         if (rawAvatar.startsWith('http') || rawAvatar.startsWith('blob:')) {
-            userAvatar = rawAvatar
+            userAvatar = `${rawAvatar}${rawAvatar.includes('?') ? '&' : '?'}t=${timestamp}`
         } else {
             const cleanBase = apiHostname.endsWith('/') ? apiHostname.slice(0, -1) : apiHostname
             const cleanPath = rawAvatar.startsWith('/') ? rawAvatar : `/${rawAvatar}`
-            userAvatar = `${cleanBase}${cleanPath}`
+            userAvatar = `${cleanBase}${cleanPath}?t=${timestamp}`
         }
     }
 
@@ -91,9 +99,8 @@ const UserDropdown = () => {
                 </Typography>
             </Box>
 
-            <Tooltip title={t('Profile')}>
+            <Tooltip title={t('Profile') as string}>
                 <IconButton onClick={handleOpen} size='small' sx={{ ml: 0.5 }}>
-                    {/* Component Avatar của MUI tự động hiển thị ảnh nếu src hợp lệ, ngược lại sẽ hiện nội dung bên trong */}
                     <Avatar
                         src={userAvatar}
                         alt={displayName}
@@ -110,7 +117,13 @@ const UserDropdown = () => {
                 onClose={handleClose}
                 PaperProps={{
                     elevation: 0,
-                    sx: { mt: 1.5, minWidth: 200, borderRadius: '16px', p: 1, filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))' },
+                    sx: {
+                        mt: 1.5,
+                        minWidth: 200,
+                        borderRadius: '16px',
+                        p: 1,
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                    },
                 }}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}

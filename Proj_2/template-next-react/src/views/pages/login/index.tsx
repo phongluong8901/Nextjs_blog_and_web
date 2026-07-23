@@ -48,6 +48,7 @@ import LoginDark from '/public/images/login-dark.png'
 import LoginLight from '/public/images/login-light.png'
 import CustomCarousel from 'src/components/component_path/ImageCarousel'
 import { useAuth } from 'src/hooks/useAuth'
+import { getAuthMeAsync } from 'src/stores/apps/auth/actions'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -159,14 +160,19 @@ const LoginPage: NextPage<TProps> = () => {
             {
                 email: data.email,
                 password: data.password,
-                rememberMe: data.remember, // 👈 Truyền vào rememberMe (lấy giá trị từ checkbox data.remember của form)
+                rememberMe: data.remember,
             },
-            (err) => {
-                setLoading(false)
+            async (err) => { // 👈 Biến callback này thành async
                 if (err) {
+                    setLoading(false)
                     setAlertSeverity('error')
                     setAlertMessage(err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
                     setOpenAlert(true)
+                } else {
+                    // 👇 Đăng nhập thành công, gọi ngay lệnh nạp dữ liệu user đầy đủ vào Redux store
+                    await dispatch(getAuthMeAsync())
+                    setLoading(false)
+                    // router.push('/') // Thường thì hook `login` trong template đã tự điều hướng rồi, nếu chưa thì bật dòng này lên
                 }
             }
         )

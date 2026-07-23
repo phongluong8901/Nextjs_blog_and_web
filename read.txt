@@ -108,7 +108,7 @@ git add .
 git commit -m "change: theme, lng, my-profile, forgot-password"
 git push -u origin 22/07/2026
 
---- push auto cici for BE
+--- push auto cicd for BE
 git checkout -b master-be
 git add .
 git commit -m "change: login, singup"

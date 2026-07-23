@@ -103,9 +103,6 @@ const MyProfilePage: NextPage = () => {
 
     const onSubmit = async (data: TProfileForm) => {
         try {
-            // console.log('=== [DEBUG CLIENT] Dữ liệu form chuẩn bị gửi:', data)
-            // console.log('=== [DEBUG CLIENT] File ảnh hiện tại trong state selectedFile:', selectedFile)
-
             const formData = new FormData()
 
             formData.append('firstName', data.firstName)
@@ -116,31 +113,21 @@ const MyProfilePage: NextPage = () => {
 
             if (selectedFile) {
                 formData.append('avatar', selectedFile)
-                // console.log('=== [DEBUG CLIENT] Đã append key "avatar" vào FormData thành công!')
-            } else {
-                // console.log('=== [DEBUG CLIENT] Không có file ảnh nào được đính kèm vào FormData.')
-            }
-
-            // In ra toàn bộ nội dung bên trong FormData để kiểm tra
-            // console.log('=== [DEBUG CLIENT] Các entries có trong FormData: ===')
-            for (let pair of formData.entries()) {
-                // console.log(pair[0] + ': ', pair[1])
             }
 
             const resultAction = await dispatch(updateAuthMeAsync(formData))
 
-            // console.log('=== [DEBUG CLIENT] Kết quả trả về từ Redux action:', resultAction)
-
             if (updateAuthMeAsync.fulfilled.match(resultAction)) {
                 alert(t('profile.updateSuccess', 'Update profile successfully!'))
-                dispatch(getAuthMeAsync())
+
+                // 💡 GỌI ĐỢI LẤY LẠI USER MỚI NGAY LẬP TỨC ĐỂ ĐỒNG BỘ REDUX STORE
+                await dispatch(getAuthMeAsync())
+
                 setSelectedFile(null)
             } else {
-                // console.log('=== [DEBUG CLIENT] Lỗi từ server trả về:', resultAction.payload)
                 alert((resultAction.payload as any)?.message || resultAction.payload || t('profile.updateFailed', 'Failed to update profile.'))
             }
         } catch (error: any) {
-            // console.error('=== [DEBUG CLIENT EXCEPTION] Update error:', error)
             alert(error?.response?.data?.message || t('profile.updateFailed', 'Failed to update profile.'))
         }
     }

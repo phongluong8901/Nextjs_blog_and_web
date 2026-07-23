@@ -1,33 +1,55 @@
-name: Deploy Backend to Vercel
-
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_BE_PROJECT_ID }} # Dùng Project ID riêng cho BE
+name: CI/CD Backend Pipeline
 
 on:
   push:
     branches:
-      - main
-      - master
+      - master-be
     paths:
-      - "Proj_2/API_SHOP/**" # Đổi đường dẫn này thành thư mục chứa BE của bạn
+      - "Proj_2/API_SHOP/**"
   workflow_dispatch:
 
 jobs:
-  Deploy-BE-Production:
+  # BƯỚC 1: CI (Cài đặt dependencies bằng Yarn và kiểm tra code)
+  ci-check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Proj_2/API_SHOP # Trỏ thẳng vào thư mục chứa Backend
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18" # Bạn có thể đổi thành '20' nếu muốn
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_BE_TOKEN }}
+      - name: Install Dependencies (Yarn)
+        run: yarn install --frozen-lockfile
 
-      - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_BE_TOKEN }}
+      - name: Build Project (nếu có lệnh build)
+        run: yarn build --if-present
 
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_BE_TOKEN }}
+  # BƯỚC 2: CD (Chỉ chạy khi Bước 1 OK 100%)
+  deploy-to-render:
+    needs: ci-check # Bắt buộc ci-check phải thành công thì job này mới được chạy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          echo "CI Passed successfully! Triggering Render deployment..."
+          response=$(curl --silent --write-out "HTTP_STATUS:%{http_code}" --request POST \
+            --url https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+            --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            --header "Content-Type: application/json")
+
+          http_status=$(echo "$response" | tr -d '\n' | sed -E 's/.*HTTP_STATUS:([0-9]{3})$/\1/')
+
+          if [ "$http_status" -eq 201 ] || [ "$http_status" -eq 200 ]; then
+            echo "Successfully triggered Render deployment!"
+          else
+            echo "Failed to trigger deployment. HTTP Status: $http_status"
+            exit 1
+          fi
