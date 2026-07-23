@@ -97,7 +97,7 @@ const MyProfilePage: NextPage = () => {
             setSelectedFile(file)
             setAvatarPreview(URL.createObjectURL(file))
         } else {
-
+            // console.log('=== [DEBUG CLIENT] Không có file nào được chọn hoặc bị hủy')
         }
     }
 
