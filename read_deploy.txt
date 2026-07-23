@@ -12,6 +12,11 @@ git add .
 git commit -m "change: connect server render"
 git push -u origin master
 
+- dugn tai master-be, day code sang master
+git add .
+git commit -m "change: connect server render"
+git push origin master-be:master
+
 --- vercel cho FE
 cd Proj_2
 cd template-next-react
