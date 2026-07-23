@@ -31,7 +31,7 @@ const port = process.env.PORT || 3001;
 
 app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(cors({
-  origin: "http://localhost:3000", // 👈 Đổi thành đúng URL/Port của Frontend đang chạy
+  origin: "http://localhost:3000", //  Đổi thành đúng URL/Port của Frontend đang chạy
   credentials: true,             // 👈 Bắt buộc phải có true thì trình duyệt mới chịu nhận Cookie
 }));
 app.use(express.json({ limit: "50mb" }));

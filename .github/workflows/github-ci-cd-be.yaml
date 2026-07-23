@@ -27,9 +27,6 @@ jobs:
       - name: Install Dependencies (Yarn)
         run: yarn install --frozen-lockfile
 
-      - name: Build Project (nếu có lệnh build)
-        run: yarn build --if-present
-
   deploy-to-render:
     needs: ci-check
     runs-on: ubuntu-latest
