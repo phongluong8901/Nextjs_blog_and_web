@@ -1,5 +1,9 @@
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
+if (typeof window !== 'undefined') {
+  console.log('GIÁ TRỊ THỰC TẾ TRÊN VERCEL:', process.env.NEXT_PUBLIC_API_URL)
+}
+
 export const CONFIG_API = {
   AUTH: {
     INDEX: `${BASE_URL}/auth/login`,
