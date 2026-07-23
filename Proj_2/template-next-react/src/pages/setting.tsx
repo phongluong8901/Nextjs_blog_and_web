@@ -12,8 +12,7 @@ const Setting: NextPage<TProps> = () => {
     )
 }
 
-// ** Gán Layout trống để không bị dính thanh Sidebar/Header của admin
-// Setting.getLayout = (page: ReactNode) => <BlankLayout>{page}</BlankLayout>
+
 
 // ** Gán Guard ngay dưới component
 Setting.authGuard = true
