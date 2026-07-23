@@ -25,6 +25,7 @@ export type MenuItemType = {
     path?: string
     icon: string
     role?: string // <-- Đã thêm thuộc tính role vào đây
+    excludeRole?: string
     children?: {
         title: string
         path: string

@@ -93,7 +93,7 @@ const MyProfilePage: NextPage = () => {
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
-            // console.log('=== [DEBUG CLIENT] Đã chọn file ảnh:', file) // Log kiểm tra file được chọn
+
             setSelectedFile(file)
             setAvatarPreview(URL.createObjectURL(file))
         } else {

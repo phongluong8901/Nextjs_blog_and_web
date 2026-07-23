@@ -4,11 +4,8 @@ import { FC, ReactNode } from 'react'
 // ** Next Imports
 import { NextRouter, useRouter } from 'next/router'
 
-// ** Third Party Imports
-import jwtDecode from 'jwt-decode'
-
 // ** Configs & Helpers
-import { BASE_URL, CONFIG_API } from 'src/configs/api'
+import { BASE_URL } from 'src/configs/api'
 import { clearLocalUserData, getLocalUserData } from 'src/helpers/storage'
 import { UserDataType } from 'src/contexts/types'
 import { useAuth } from 'src/hooks/useAuth'

@@ -26,7 +26,7 @@ import { logout as clearAuthRedux } from 'src/stores/apps/auth'
 
 const UserDropdown = () => {
     // 💡 Lấy cả user và setUser từ AuthContext để đồng bộ dữ liệu chuẩn xác nhất
-    const { user, setUser, logout } = useAuth()
+    const { user, logout } = useAuth()
     const dispatch = useDispatch()
     const { settings } = useSettings()
     const router = useRouter()

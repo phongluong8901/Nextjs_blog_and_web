@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { NextPage } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/router'
 
 // ** Import Redux hooks & actions
 import { useSelector, useDispatch } from 'react-redux'
@@ -100,7 +99,7 @@ const schema = yup.object().shape({
 type TFormData = yup.InferType<typeof schema>
 
 const LoginPage: NextPage<TProps> = () => {
-    const [open, setOpen] = useState(false)
+    // const [open, setOpen] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -109,7 +108,6 @@ const LoginPage: NextPage<TProps> = () => {
     const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
 
     const theme = useTheme()
-    const router = useRouter()
     const dispatch = useDispatch<AppDispatch>()
     const { login } = useAuth()
 
@@ -148,7 +146,7 @@ const LoginPage: NextPage<TProps> = () => {
         }
     }, [authState.registeredEmail, authState.registeredPassword, setValue, dispatch])
 
-    const handleClickOpen = () => setOpen(true)
+    // const handleClickOpen = () => setOpen(true)
     const handleCloseAlert = (_event?: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') return
         setOpenAlert(false)
@@ -172,7 +170,6 @@ const LoginPage: NextPage<TProps> = () => {
                     // 👇 Đăng nhập thành công, gọi ngay lệnh nạp dữ liệu user đầy đủ vào Redux store
                     await dispatch(getAuthMeAsync())
                     setLoading(false)
-                    // router.push('/') // Thường thì hook `login` trong template đã tự điều hướng rồi, nếu chưa thì bật dòng này lên
                 }
             }
         )

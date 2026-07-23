@@ -22,6 +22,7 @@ export const getLocalUserData = () => {
             userData: window.localStorage.getItem(USER_DATA) || window.sessionStorage.getItem(USER_DATA),
         }
     }
+
     return {
         accessToken: null,
         userData: null,

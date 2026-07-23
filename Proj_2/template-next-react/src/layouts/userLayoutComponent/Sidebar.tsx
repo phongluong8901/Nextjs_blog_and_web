@@ -16,7 +16,7 @@ import { Icon } from '@iconify/react'
 import { useAuth } from 'src/hooks/useAuth'
 
 // ** Sub-components
-import MenuItemList, { MenuItemType } from './sidebarComponents/MenuItemList'
+import MenuItemList, { MenuItemType } from './sideBarComponents/MenuItemList'
 
 type SidebarProps = {
     drawerWidthOpen: number
@@ -68,8 +68,9 @@ const Sidebar = ({
         }
         if (item.excludeRole && item.excludeRole === userRole) {
             return false
-            //
+
         }
+
         return true
     })
 
