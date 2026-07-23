@@ -9,12 +9,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  # BƯỚC 1: CI (Cài đặt dependencies bằng Yarn và kiểm tra code)
   ci-check:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Proj_2/API_SHOP # Trỏ thẳng vào thư mục chứa Backend
+        working-directory: Proj_2/API_SHOP
 
     steps:
       - name: Checkout Code
@@ -23,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18" # Bạn có thể đổi thành '20' nếu muốn
+          node-version: "18"
 
       - name: Install Dependencies (Yarn)
         run: yarn install --frozen-lockfile
@@ -31,9 +30,8 @@ jobs:
       - name: Build Project (nếu có lệnh build)
         run: yarn build --if-present
 
-  # BƯỚC 2: CD (Chỉ chạy khi Bước 1 OK 100%)
   deploy-to-render:
-    needs: ci-check # Bắt buộc ci-check phải thành công thì job này mới được chạy
+    needs: ci-check
     runs-on: ubuntu-latest
 
     steps:
