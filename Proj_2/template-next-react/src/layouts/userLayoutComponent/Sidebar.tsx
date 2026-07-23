@@ -14,9 +14,9 @@ import { Icon } from '@iconify/react'
 
 // ** Hooks
 import { useAuth } from 'src/hooks/useAuth'
+import MenuItemList, { MenuItemType } from './sideBarComponents/MenuItemList'
 
 // ** Sub-components
-import MenuItemList, { MenuItemType } from './sidebarComponents/MenuItemList'
 
 type SidebarProps = {
     drawerWidthOpen: number
