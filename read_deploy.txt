@@ -9,7 +9,7 @@ git push -u origin master-be
 - push auto cici for FE
 git checkout -b master
 git add .
-git commit -m "change: "
+git commit -m "change: connect server render"
 git push -u origin master
 
 --- vercel cho FE
