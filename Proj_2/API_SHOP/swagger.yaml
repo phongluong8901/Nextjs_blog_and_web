@@ -8,7 +8,8 @@ info:
   version: 1.0.11
 servers:
   # - url: https://api-shop-lks2.onrender.com/
-    - url: http://localhost:3001
+    # - url: http://localhost:3001
+    - url: http://api-nextjs-store-shop-be.com/
 tags:
   - name: auth
     description: Everything about auth
