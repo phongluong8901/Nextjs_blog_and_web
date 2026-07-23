@@ -1,0 +1,32 @@
+Nhờ cơ chế File-based Routing mặc định của Next.js (dành cho pages directory), cấu trúc thư mục của bạn sẽ tự động mapping thành đường dẫnURL.
+
+Cấu trúc thư mục tương ứng:
+Để truy cập vào http://localhost:3000/login, bạn chỉ cần sắp xếp file theo một trong hai cách sau:
+
+Cách 1: Tạo file login.tsx trực tiếp (Đơn giản nhất)
+Plaintext
+
+
+my-project/
+└── src/
+    ├── pages/
+    │   ├── index.tsx          --> http://localhost:3000/
+    │   └── login.tsx          --> http://localhost:3000/login  (File Login của bạn ở đây)
+    └── views/
+        └── pages/
+            └── login/
+                └── index.tsx  --> Component giao diện (LoginPage)
+Cách 2: Tạo folder login/index.tsx
+Plaintext
+
+
+my-project/
+└── src/
+    ├── pages/
+    │   ├── index.tsx          --> http://localhost:3000/
+    │   └── login/
+    │       └── index.tsx      --> http://localhost:3000/login  (File Login của bạn ở đây)
+    └── views/
+        └── pages/
+            └── login/
+                └── index.tsx  --> Component giao diện (LoginPage)
