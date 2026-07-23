@@ -2,6 +2,7 @@
 // import Next
 import { NextPage } from 'next'
 import { ReactNode } from 'react'
+
 // ** view
 import BlankLayout from 'src/layouts/BlankLayout'
 import ForgotPasswordPage from 'src/views/pages/forgot-password'

@@ -9,8 +9,6 @@ import { useTheme } from '@mui/material/styles'
 // ** Iconify Imports
 import { Icon } from '@iconify/react'
 
-// ** Hook Imports
-import { useSettings } from 'src/hooks/useSettings'
 
 // ** Third Party Imports
 import { useTranslation } from 'react-i18next'
@@ -27,19 +25,7 @@ type HeaderProps = {
 
 const Header = ({ onDrawerToggle }: HeaderProps) => {
     const theme = useTheme()
-    const { settings } = useSettings()
     const { t } = useTranslation()
-
-    // Map giá trị themeColor từ context sang mã màu hex hoặc dùng màu primary của palette hiện tại
-    const primaryColorMap: Record<string, string> = {
-        primary: '#7367F0',
-        success: '#28C76F',
-        error: '#EA5455',
-        warning: '#FF9F43',
-        info: '#00CFE8',
-    }
-
-    const currentPrimaryColor = primaryColorMap[settings.themeColor] || theme.palette.primary.main
 
     return (
         <AppBar

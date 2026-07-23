@@ -1,6 +1,5 @@
 // ** React Imports
 import { useState, MouseEvent, useEffect } from 'react'
-import { useRouter } from 'next/router'
 
 // ** MUI Imports
 import Menu from '@mui/material/Menu'
@@ -15,7 +14,6 @@ import { Icon } from '@iconify/react'
 import { useTranslation } from 'react-i18next'
 
 const LanguageDropdown = () => {
-    const router = useRouter()
     const { i18n, t } = useTranslation()
 
     // Lấy ngôn ngữ hiện tại từ i18n hoặc fallback về 'vi'
@@ -37,7 +35,6 @@ const LanguageDropdown = () => {
     const handleChangeLanguage = (lang: string) => {
         setLocale(lang)
         handleClose()
-        // Kích hoạt đổi ngôn ngữ ngay lập tức cho toàn hệ thống qua i18next
         i18n.changeLanguage(lang)
     }
 

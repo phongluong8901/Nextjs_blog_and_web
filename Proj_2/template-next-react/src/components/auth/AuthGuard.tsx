@@ -15,11 +15,12 @@ const AuthGuard = (props: AuthGuardProps) => {
 
   // 👉 THÊM ĐOẠN NÀY ĐỂ BỎ QUA NẾU LÀ TRANG CÔNG KHAI CẦN TRÁNH BẢO VỆ
   const publicRoutes = ['/forgot-password', '/login', '/register']
-  if (publicRoutes.includes(router.pathname)) {
-    return <>{children}</>
-  }
+  const isPublicRoute = publicRoutes.includes(router.pathname)
 
   useEffect(() => {
+    // Always call hooks in same order; skip guard logic for public routes
+    if (isPublicRoute) return
+
     if (!router.isReady || auth.loading) {
       return
     }
@@ -31,7 +32,11 @@ const AuthGuard = (props: AuthGuardProps) => {
         query: { returnUrl: router.asPath },
       })
     }
-  }, [router.isReady, auth.loading, auth.user, router])
+  }, [isPublicRoute, router.isReady, auth.loading, auth.user, router])
+
+  if (isPublicRoute) {
+    return <>{children}</>
+  }
 
   if (auth.loading || auth.user === null) {
     return fallback

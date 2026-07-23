@@ -25,7 +25,6 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from 'src/contexts/AuthContext'
 
 // ** Global css styles
-import 'src/styles/globals.scss'
 
 import { store } from 'src/stores'
 import GuestGuard from 'src/components/auth/GuestGuard'

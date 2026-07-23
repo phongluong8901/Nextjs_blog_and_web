@@ -1,5 +1,4 @@
 // ** React Imports
-import { MouseEvent } from 'react'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'

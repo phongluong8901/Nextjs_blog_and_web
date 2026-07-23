@@ -40,6 +40,7 @@ import CustomTextField from 'src/components/text-field'
 // ** Import ảnh Light / Dark Mode
 import ResetDark from '/public/images/register-dark.png'
 import ResetLight from '/public/images/register-light.png'
+import { resetPasswordAuth } from 'src/services/auth'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -105,6 +106,7 @@ const ResetPasswordPage: NextPage<TProps> = () => {
             setAlertSeverity('error')
             setAlertMessage('Mã xác thực (secretKey) không hợp lệ hoặc đã hết hạn!')
             setOpenAlert(true)
+
             return
         }
 

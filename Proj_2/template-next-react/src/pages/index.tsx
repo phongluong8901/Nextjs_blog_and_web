@@ -9,7 +9,6 @@ export default function Home() {
 
   useEffect(() => {
     const successMessage = sessionStorage.getItem('login_success_toast')
-    // console.log('🔍 [Trang Chủ] Kiểm tra sessionStorage:', successMessage)
 
     if (successMessage) {
       console.log('🚀 [Trang Chủ] Tìm thấy thông báo! Đang gọi toast.success...')

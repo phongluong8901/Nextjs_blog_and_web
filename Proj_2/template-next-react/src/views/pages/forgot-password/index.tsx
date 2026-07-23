@@ -6,10 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 
-// ** Import Redux Hooks (nếu cần dùng chung store)
-import { useDispatch } from 'react-redux'
-import { AppDispatch } from 'src/stores'
-
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -78,7 +74,7 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
 
     const router = useRouter()
     const theme = useTheme()
-    const dispatch = useDispatch<AppDispatch>()
+
 
     const {
         control,
@@ -95,7 +91,6 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
     const onSubmit = async (data: TFormData) => {
         try {
             setLoading(true)
-            // Gọi API thật thông qua service đã cấu hình
             const response = await forgotPasswordAuth({ email: data.email })
 
             setAlertSeverity('success')

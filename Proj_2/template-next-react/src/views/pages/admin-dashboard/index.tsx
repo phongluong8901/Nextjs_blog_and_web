@@ -14,7 +14,6 @@ import {
     TableHead,
     TableRow,
     Paper,
-    useTheme,
 } from '@mui/material'
 import { Icon } from '@iconify/react'
 
@@ -26,7 +25,7 @@ const RECENT_USERS = [
 ]
 
 const AdminDashboardPage: NextPage = () => {
-    const theme = useTheme()
+
     const { t, i18n } = useTranslation()
 
     // Sử dụng useMemo để mảng STATS_DATA tự động cập nhật lại ngôn ngữ khi thay đổi i18n.language

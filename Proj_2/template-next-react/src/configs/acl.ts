@@ -14,25 +14,9 @@ export type ACLObj = {
 // ==========================================
 // 1. CẤU HÌNH DANH SÁCH SUBJECT THEO 3 TRẠNG THÁI
 // ==========================================
-const ONLY_ADMIN_SUBJECTS = [
-  'admin-page',
-  'admin-dashboard',
-  'user-management'
-  // Sau này có trang Admin nào mới chỉ cần thêm vào đây...
-]
+const ONLY_ADMIN_SUBJECTS = ['admin-page', 'admin-dashboard', 'user-management']
 
-const ONLY_USER_SUBJECTS = [
-  'userHome-page'
-  // Sau này có trang User nào riêng tư chỉ cần thêm vào đây...
-]
-
-const COMMON_SUBJECTS = [
-  'all',
-  'dashboard',
-  'profile-page',
-  'setting-page'
-  // Các trang chung cho cả Admin và User thêm vào đây...
-]
+const ONLY_USER_SUBJECTS = ['userHome-page']
 
 const defineRulesFor = (role: string, subject: string) => {
   const { can, cannot, rules } = new AbilityBuilder(AppAbility)

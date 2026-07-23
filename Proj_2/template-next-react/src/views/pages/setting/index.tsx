@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NextPage } from 'next'
 import { useTranslation } from 'react-i18next'
+import { TFunction } from 'i18next'
 import {
     Box,
     Card,
@@ -23,7 +24,7 @@ import CustomTextField from 'src/components/text-field'
 import instanceAxios from 'src/helpers/axios'
 
 // Validation Schema dùng i18n (được đưa ra ngoài component để tránh khởi tạo lại mỗi lần render)
-const getPasswordSchema = (t: (key: string, fallback?: string) => string) =>
+const getPasswordSchema = (t: TFunction) =>
     yup.object().shape({
         currentPassword: yup.string().required(t('validation.currentPasswordRequired', 'Please enter current password.')),
         newPassword: yup
@@ -41,6 +42,7 @@ type TPasswordForm = yup.InferType<ReturnType<typeof getPasswordSchema>>
 // Custom Toggle Switch thuần túy, loại bỏ hoàn toàn dependency gây lỗi của MUI Switch
 const CustomToggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => {
     const theme = useTheme()
+
     return (
         <Box
             onClick={onChange}
