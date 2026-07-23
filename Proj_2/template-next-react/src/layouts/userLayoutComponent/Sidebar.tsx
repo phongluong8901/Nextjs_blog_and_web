@@ -15,8 +15,12 @@ import { Icon } from '@iconify/react'
 // ** Hooks
 import { useAuth } from 'src/hooks/useAuth'
 
+// ** Import VerticalItems từ file dữ liệu của bạn (điều chỉnh lại đường dẫn './verticalItems' cho đúng với thực tế)
+
+
 // ** Sub-components
 import MenuItemList, { MenuItemType } from './sideBarComponents/MenuItemList'
+import { VerticalItems } from 'src/configs/layout'
 
 type SidebarProps = {
     drawerWidthOpen: number
@@ -27,23 +31,17 @@ type SidebarProps = {
     onToggleCollapse: () => void
 }
 
-// Cấu trúc toàn bộ menu của hệ thống
+// Giữ nguyên các menu cũ và nối thêm VerticalItems vào bên dưới
 const allMenuItems: MenuItemType[] = [
     { title: 'Dashboard', path: '/', icon: 'mdi:view-dashboard-outline' },
     { title: 'User Home', path: '/user-home', icon: 'mdi:home-account-outline', excludeRole: 'Admin' },
     { title: 'Admin Home', path: '/admin-home', icon: 'mdi:view-dashboard-variant-outline', role: 'Admin' },
     { title: 'Admin Dashboard', path: '/admin-dashboard', icon: 'mdi:shield-account-outline', role: 'Admin' },
-    {
-        title: 'User Management',
-        icon: 'mdi:account-group-outline',
-        role: 'Admin',
-        children: [
-            { title: 'List', path: '/users' },
-            { title: 'Roles', path: '/users/roles' },
-        ],
-    },
     { title: 'My Profile', path: '/my-profile', icon: 'mdi:account-outline' },
     { title: 'System Settings', path: '/setting', icon: 'mdi:cog-outline' },
+
+    // Nối thêm các mục từ VerticalItems vào dưới cùng
+    ...VerticalItems,
 ]
 
 const Sidebar = ({
@@ -68,7 +66,6 @@ const Sidebar = ({
         }
         if (item.excludeRole && item.excludeRole === userRole) {
             return false
-
         }
 
         return true

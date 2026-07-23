@@ -124,5 +124,63 @@
   "pagination": {
     "rowsPerPage": "Số hàng mỗi trang:",
     "of": "của"
+  },
+  "Navigation": {
+    "Dashboard": "Dashboard",
+    "UserHome": "Trang chủ người dùng",
+    "AdminHome": "Trang chủ Quản trị",
+    "AdminDashboard": "Bảng điều khiển Quản trị",
+    "MyProfile": "Hồ sơ cá nhân",
+    "SystemSettings": "Cài đặt hệ thống",
+    "ManageSystem": "Quản lý hệ thống",
+    "RoleManagement": "Quản lý vai trò",
+    "UserManagement": "Quản lý người dùng",
+    "ManageProduct": "Quản lý sản phẩm",
+    "ProductManagement": "Quản lý sản phẩm",
+    "OrderManagement": "Quản lý đơn hàng",
+    "ReviewList": "Danh sách đánh giá",
+    "Settings": "Cài đặt",
+    "CitySettings": "Cài đặt thành phố",
+    "DeliveryTypeSettings": "Cài đặt phương thức giao hàng",
+    "PaymentTypeSettings": "Cài đặt phương thức thanh toán"
+  },
+  "Pages": {
+    "Login": "Đăng nhập",
+    "Register": "Đăng ký",
+    "ForgotPassword": "Quên mật khẩu",
+    "ResetPassword": "Đặt lại mật khẩu",
+    "ChangePassword": "Đổi mật khẩu",
+    "MyProfile": "Hồ sơ của tôi",
+    "UserHome": "Trang chủ User",
+    "AdminHome": "Trang chủ Admin",
+    "AdminDashboard": "Bảng điều khiển Admin",
+    "Setting": "Cài đặt",
+    "Role": "Quản lý vai trò",
+    "User": "Quản lý người dùng",
+    "ManageProduct": "Quản lý sản phẩm",
+    "ManageOrder": "Quản lý đơn hàng",
+    "ManageReview": "Quản lý đánh giá",
+    "City": "Quản lý thành phố",
+    "DeliveryType": "Phương thức giao hàng",
+    "PaymentType": "Phương thức thanh toán"
+  },
+  "common": {
+    "name": "Tên",
+    "code": "Mã",
+    "description": "Mô tả",
+    "fullName": "Họ và tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "save": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "reset": "Đặt lại",
+    "updateSuccess": "Thao tác thành công!",
+    "updateFailed": "Thao tác thất bại."
+  },
+  "validation": {
+    "nameRequired": "Vui lòng nhập tên.",
+    "codeRequired": "Vui lòng nhập mã.",
+    "emailRequired": "Vui lòng nhập email.",
+    "skuRequired": "Vui lòng nhập mã SKU."
   }
 }

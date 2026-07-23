@@ -148,3 +148,8 @@ Trong lập trình web, các bộ lưu trữ phía client có các mục đích 
 * Ông cần gửi dữ liệu đó **về cho Backend (Server)** ở mọi request HTTP. Rất quan trọng đối với các token bảo mật cao (như `HttpOnly Cookie` để chống tấn công XSS, hoặc lưu thông tin xác thực phiên làm việc phía server).
 * **Ví dụ thực tế:** 
   * Lưu Refresh Token bảo mật cao mà mã độc JavaScript phía client không được phép đọc trực tiếp.
+
+--- deboune cho serch
+Hook useDebounce trong hình dùng để trì hoãn việc cập nhật giá trị cho đến khi người dùng ngừng thay đổi giá trị đó trong một khoảng thời gian (delay) nhất định.
+
+Ứng dụng phổ biến nhất: Dùng cho thanh tìm kiếm (Search Input). Thay vì cứ mỗi lần người dùng gõ một chữ cái là gọi API tìm kiếm ngay lập tức (gây quá tải server), hook này sẽ đợi người dùng dừng gõ hẳn (ví dụ sau 500ms) thì mới cập nhật giá trị để gọi API một lần duy nhất.

@@ -124,5 +124,65 @@
   "pagination": {
     "rowsPerPage": "Lignes par page :",
     "of": "sur"
+  },
+  
+  "Navigation": {
+    "Dashboard": "Tableau de bord",
+    "UserHome": "Accueil utilisateur",
+    "AdminHome": "Accueil administrateur",
+    "AdminDashboard": "Tableau de bord administrateur",
+    "MyProfile": "Mon profil",
+    "SystemSettings": "Paramètres système",
+    "ManageSystem": "Gestion du système",
+    "RoleManagement": "Gestion des rôles",
+    "UserManagement": "Gestion des utilisateurs",
+    "ManageProduct": "Gestion des produits",
+    "ProductManagement": "Gestion des produits",
+    "OrderManagement": "Gestion des commandes",
+    "ReviewList": "Liste des avis",
+    "Settings": "Paramètres",
+    "CitySettings": "Paramètres des villes",
+    "DeliveryTypeSettings": "Paramètres de livraison",
+    "PaymentTypeSettings": "Paramètres de paiement"
+  },
+  "Pages": {
+    "Login": "Connexion",
+    "Register": "S'inscrire",
+    "ForgotPassword": "Mot de passe oublié",
+    "ResetPassword": "Réinitialiser le mot de passe",
+    "ChangePassword": "Changer le mot de passe",
+    "MyProfile": "Mon profil",
+    "UserHome": "Accueil utilisateur",
+    "AdminHome": "Accueil administrateur",
+    "AdminDashboard": "Tableau de bord admin",
+    "Setting": "Paramètre",
+    "Role": "Gestion des rôles",
+    "User": "Gestion des utilisateurs",
+    "ManageProduct": "Gestion des produits",
+    "ManageOrder": "Gestion des commandes",
+    "ManageReview": "Gestion des avis",
+    "City": "Gestion des villes",
+    "DeliveryType": "Type de livraison",
+    "PaymentType": "Type de paiement"
+  },
+  "common": {
+    "name": "Nom",
+    "code": "Code",
+    "description": "La description",
+    "fullName": "Nom et prénom",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "save": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "reset": "Réinitialiser",
+    "updateSuccess": "Opération réussie !",
+    "updateFailed": "L'opération a échoué."
+  },
+  "validation": {
+    "nameRequired": "Veuillez entrer le nom.",
+    "codeRequired": "Veuillez entrer le code.",
+    "emailRequired": "Veuillez entrer l'e-mail.",
+    "skuRequired": "Veuillez entrer le SKU."
   }
+
 }

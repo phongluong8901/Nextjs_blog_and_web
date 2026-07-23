@@ -124,5 +124,64 @@
   "pagination": {
     "rowsPerPage": "Rows per page:",
     "of": "of"
+  },
+  "Navigation": {
+    "Dashboard": "Dashboard",
+    "UserHome": "User Home",
+    "AdminHome": "Admin Home",
+    "AdminDashboard": "Admin Dashboard",
+    "MyProfile": "My Profile",
+    "SystemSettings": "System Settings",
+    "ManageSystem": "System Management",
+    "RoleManagement": "Role Management",
+    "UserManagement": "User Management",
+    "ManageProduct": "Product Management",
+    "ProductManagement": "Product Management",
+    "OrderManagement": "Order Management",
+    "ReviewList": "Review List",
+    "Settings": "Settings",
+    "CitySettings": "City Settings",
+    "DeliveryTypeSettings": "Delivery Type Settings",
+    "PaymentTypeSettings": "Payment Type Settings"
+  },
+  "Pages": {
+    "Login": "Login",
+    "Register": "Register",
+    "ForgotPassword": "Forgot Password",
+    "ResetPassword": "Reset Password",
+    "ChangePassword": "Change Password",
+    "MyProfile": "My Profile",
+    "UserHome": "User Home",
+    "AdminHome": "Admin Home",
+    "AdminDashboard": "Admin Dashboard",
+    "Setting": "Setting",
+    "Role": "Role Management",
+    "User": "User Management",
+    "ManageProduct": "Product Management",
+    "ManageOrder": "Order Management",
+    "ManageReview": "Review Management",
+    "City": "City Management",
+    "DeliveryType": "Delivery Type",
+    "PaymentType": "Payment Type"
+  },
+  "common": {
+    "name": "Name",
+    "code": "Code",
+    "description": "Description",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "reset": "Reset",
+    "updateSuccess": "Operation completed successfully!",
+    "updateFailed": "Operation failed."
+  },
+  "validation": {
+    "nameRequired": "Please enter name.",
+    "codeRequired": "Please enter code.",
+    "emailRequired": "Please enter email.",
+    "skuRequired": "Please enter SKU."
   }
+
 }

@@ -24,6 +24,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getAuthMeAsync, updateAuthMeAsync } from 'src/stores/apps/auth/actions'
 import { AppDispatch, RootState } from 'src/stores'
 
+// ** Third Party Components
+import toast from 'react-hot-toast' // 👈 1. Import toast
+
 const MyProfilePage: NextPage = () => {
     const theme = useTheme()
     const { t, i18n } = useTranslation()
@@ -96,8 +99,6 @@ const MyProfilePage: NextPage = () => {
 
             setSelectedFile(file)
             setAvatarPreview(URL.createObjectURL(file))
-        } else {
-            // console.log('=== [DEBUG CLIENT] Không có file nào được chọn hoặc bị hủy')
         }
     }
 
@@ -118,17 +119,22 @@ const MyProfilePage: NextPage = () => {
             const resultAction = await dispatch(updateAuthMeAsync(formData))
 
             if (updateAuthMeAsync.fulfilled.match(resultAction)) {
-                alert(t('profile.updateSuccess', 'Update profile successfully!'))
+                // 👈 2. Thay alert thành toast.success
+                toast.success(t('profile.updateSuccess', 'Update profile successfully!'))
 
                 // 💡 GỌI ĐỢI LẤY LẠI USER MỚI NGAY LẬP TỨC ĐỂ ĐỒNG BỘ REDUX STORE
                 await dispatch(getAuthMeAsync())
 
                 setSelectedFile(null)
             } else {
-                alert((resultAction.payload as any)?.message || resultAction.payload || t('profile.updateFailed', 'Failed to update profile.'))
+                // 👈 3. Thay alert thành toast.error khi thất bại
+                const errorMsg = (resultAction.payload as any)?.message || resultAction.payload || t('profile.updateFailed', 'Failed to update profile.')
+                toast.error(errorMsg)
             }
         } catch (error: any) {
-            alert(error?.response?.data?.message || t('profile.updateFailed', 'Failed to update profile.'))
+            // 👈 4. Thay alert thành toast.error khi catch exception
+            const errorMsg = error?.response?.data?.message || t('profile.updateFailed', 'Failed to update profile.')
+            toast.error(errorMsg)
         }
     }
 

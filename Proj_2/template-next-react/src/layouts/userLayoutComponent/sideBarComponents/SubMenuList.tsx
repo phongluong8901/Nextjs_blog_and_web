@@ -5,8 +5,12 @@ import { useRouter } from 'next/router'
 // ** MUI Imports
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
+import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Collapse from '@mui/material/Collapse'
+
+// ** Iconify Imports
+import { Icon } from '@iconify/react'
 
 // ** Third Party Imports
 import { useTranslation } from 'react-i18next'
@@ -14,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 type ChildType = {
     title: string
     path: string
+    icon?: string // Thêm thuộc tính icon cho item con
 }
 
 type SubMenuListProps = {
@@ -28,7 +33,7 @@ const SubMenuList = ({ isOpen, childrenItems, onItemClick }: SubMenuListProps) =
 
     return (
         <Collapse in={isOpen} timeout='auto' unmountOnExit>
-            <List component='div' disablePadding sx={{ pl: 4, pt: 0.5, pb: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <List component='div' disablePadding sx={{ pl: 2, pt: 0.5, pb: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {childrenItems?.map((child) => {
                     const isChildRouteActive = router.pathname === child.path
 
@@ -50,6 +55,20 @@ const SubMenuList = ({ isOpen, childrenItems, onItemClick }: SubMenuListProps) =
                                 },
                             }}
                         >
+                            {/* Hiển thị Icon của mục con nếu có */}
+                            {child.icon && (
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: 2,
+                                        justifyContent: 'center',
+                                        color: isChildRouteActive ? 'primary.main' : 'text.secondary',
+                                    }}
+                                >
+                                    <Icon icon={child.icon} width={20} />
+                                </ListItemIcon>
+                            )}
+
                             <ListItemText
                                 primary={t(child.title)}
                                 primaryTypographyProps={{

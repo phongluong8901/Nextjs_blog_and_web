@@ -29,6 +29,7 @@ export type MenuItemType = {
     children?: {
         title: string
         path: string
+        icon?: string
     }[]
 }
 
