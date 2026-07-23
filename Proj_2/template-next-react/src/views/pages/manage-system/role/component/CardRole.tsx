@@ -8,7 +8,7 @@ import FormControl from '@mui/material/FormControl'
 import FormLabel from '@mui/material/FormLabel'
 import Typography from '@mui/material/Typography'
 import { useTheme } from '@mui/material/styles'
-import { Controller, Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
+import { Controller, Control, FieldErrors } from 'react-hook-form'
 import CustomTextField from 'src/components/text-field'
 
 interface CardRoleProps {
@@ -19,21 +19,6 @@ interface CardRoleProps {
     reset: () => void
     loading: boolean
     isEdit?: boolean
-    setValue: UseFormSetValue<any> // <--- Thêm setValue vào interface
-}
-
-// Hàm chuẩn hóa tiếng Việt thành mã code (Ví dụ: "Thu ngân" -> "THU_NGAN")
-const generateCodeFromName = (str: string) => {
-    if (!str) return ''
-
-    return str
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Bỏ dấu tiếng Việt
-        .replace(/[đĐ]/g, 'd')
-        .replace(/([^0-9a-z-\s])/gi, '') // Xóa ký tự đặc biệt
-        .trim()
-        .replace(/\s+/g, '_') // Thay khoảng trắng bằng dấu gạch dưới
-        .toUpperCase()
 }
 
 const CardRole: React.FC<CardRoleProps> = ({
@@ -44,7 +29,6 @@ const CardRole: React.FC<CardRoleProps> = ({
     reset,
     loading,
     isEdit = false,
-    setValue,
 }) => {
     const theme = useTheme()
     const { t } = useTranslation()
@@ -61,7 +45,6 @@ const CardRole: React.FC<CardRoleProps> = ({
                 noValidate
                 sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
             >
-                {/* Ô CODE */}
                 <FormControl fullWidth error={Boolean(errors.code)}>
                     <FormLabel>{t('common.code', 'Code')}</FormLabel>
                     <Controller
@@ -79,7 +62,6 @@ const CardRole: React.FC<CardRoleProps> = ({
                     />
                 </FormControl>
 
-                {/* Ô NAME: Bắt sự kiện gõ để tự động sinh Code nếu không phải chế độ Edit */}
                 <FormControl fullWidth error={Boolean(errors.name)}>
                     <FormLabel>{t('common.name', 'Name')}</FormLabel>
                     <Controller
@@ -88,14 +70,6 @@ const CardRole: React.FC<CardRoleProps> = ({
                         render={({ field }) => (
                             <CustomTextField
                                 {...field}
-                                onChange={(e) => {
-                                    const value = e.target.value
-                                    field.onChange(value)
-                                    if (!isEdit) {
-                                        const autoCode = generateCodeFromName(value)
-                                        setValue('code', autoCode, { shouldValidate: true })
-                                    }
-                                }}
                                 placeholder={t('role.placeholderName', 'Enter role name...')}
                                 fullWidth
                                 error={Boolean(errors.name)}
@@ -105,7 +79,6 @@ const CardRole: React.FC<CardRoleProps> = ({
                     />
                 </FormControl>
 
-                {/* Ô DESCRIPTION */}
                 <FormControl fullWidth>
                     <FormLabel>{t('common.description', 'Description')}</FormLabel>
                     <Controller
