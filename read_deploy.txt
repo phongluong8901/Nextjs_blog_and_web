@@ -7,15 +7,15 @@ git commit -m "change: cookie, remmember"
 git push -u origin master-be
 
 - push auto cici for FE
-git checkout -b master
+git checkout -b master-fe
 git add .
 git commit -m "change: connect server render"
-git push -u origin master
+git push -u origin master-fe
 
 - dung tai master-be, day code sang master
 git add .
 git commit -m "change: connect server render"
-git push origin master-be:+master
+git push origin master-be:master-fe
 
 --- vercel cho FE
 cd Proj_2
