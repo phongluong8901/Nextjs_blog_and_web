@@ -1,0 +1,58 @@
+--- github
+
+- push auto cici for BE
+git checkout master-be
+git add .
+git commit -m "change: cookie, remmember"
+git push -u origin master-be
+
+- push auto cici for FE
+git checkout master
+git add .
+git commit -m "change: connect server render"
+git push -u origin master
+
+--- vercel cho FE
+cd Proj_2
+cd template-next-react
+
+yarn global add vercel
+yarn global bin
+-> C:\Users\mbw2025\AppData\Local\Yarn\bin
+
+- login va deploy tu may len thang vercel
+vercel login
+vercel link
+vercel --prod
+
+--- render cho BE
+🛠 Hướng dẫn cấu hình trên Render
+Khi bạn tạo Web Service mới trên Render, hãy điền các thông số quan trọng theo đúng bảng dưới đây để hệ thống tự động nhận diện và khởi chạy project mượt mà:
+
+Repository: Chọn kho lưu trữ Nextjs_blog_and_web của bạn trên GitHub.
+
+Branch: Chọn nhánh master-be (đây là nhánh chứa code của bạn, tuyệt đối không để mặc định là main hay master).
+
+Root Directory: Proj_2/API_SHOP (Điền chính xác đường dẫn này để Render biết tìm file package.json nằm ở đâu trong cây thư mục).
+
+Runtime: Node
+
+Build Command: npm install
+
+Start Command: npm start
+
+📝 Lưu ý quan trọng trước khi bấm Deploy:
+Biến môi trường (Environment Variables): Đừng quên thêm đầy đủ các biến như MONGO_DB (nhớ encode ký tự @ trong mật khẩu thành %40), URL_FE_APP,... vào phần cấu hình Environment trên Render.
+
+File package.json: Đảm bảo file package.json trong thư mục API_SHOP đã được xóa sạch các dòng comment (//) và có sẵn script start là "node src/index.js".
+
+
+--- link deploy
+- BE
+https://nextjs-blog-and-web.onrender.com/api/auth/login
+
+-swagger
+https://nextjs-blog-and-web.onrender.com/swagger
+
+-FE
+https://nextjs-blog-and-web.vercel.app/
