@@ -1,0 +1,24 @@
+--- github
+
+- push auto cici for BE
+git checkout -b master-be
+git add .
+git commit -m "change: cookie, remmember"
+git push -u origin master-be
+
+- push auto cici for FE
+git checkout -b master
+git add .
+git commit -m "change: "
+git push -u origin master
+
+---vercel
+cd Proj_2
+cd API_SHOP
+
+yarn global add vercel
+yarn global bin
+-> C:\Users\mbw2025\AppData\Local\Yarn\bin
+
+vercel login
+vercel link

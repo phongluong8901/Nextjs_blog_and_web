@@ -75,3 +75,76 @@ Khi đưa vào Redux, bạn chỉ cần gọi 1 lần (ví dụ lúc app vừa k
 Redux hỗ trợ sẵn các trạng thái pending (đang tải), fulfilled (thành công), rejected (thất bại).
 
 Bạn có thể dễ dàng hiển thị khung Skeleton loading hoặc vòng quay xoay vòng (Spinner) ở bất cứ đâu trong app khi Redux đang ở trạng thái loading = true.
+
+--- cookie, localstorage, redux
+# Phân biệt Cookie, LocalStorage và Redux
+
+## Bảng so sánh tổng quan
+
+| Tiêu chí | Cookie | LocalStorage | Redux |
+| :--- | :--- | :--- | :--- |
+| **Bản chất** | Dữ liệu lưu trữ trên trình duyệt, tự động gửi lên server trong mỗi HTTP request. | Dữ liệu lưu trữ cục bộ trên trình duyệt (Client-side storage). | Thư viện quản lý trạng thái (State Management) nằm trong **bộ nhớ RAM** (JavaScript memory) của ứng dụng. |
+| **Phạm vi (Scope)** | Theo tên miền (Domain) và đường dẫn (Path). Có thể chia sẻ giữa client và server. | Theo tên miền (Domain). Chỉ tồn tại ở phía client. | Chỉ tồn tại trong vòng đời của ứng dụng React/JS đang chạy (F5 là mất). |
+| **Dung lượng lưu trữ** | Rất nhỏ (tối đa khoảng **4KB**). | Khá lớn (thường khoảng **5MB** đến **10MB** tùy trình duyệt). | Phụ thuộc vào bộ nhớ RAM của thiết bị (lớn nhưng không nên lạm dụng). |
+| **Thời gian sống (Lifespan)** | Có thể cấu hình thời gian hết hạn (`Expires` / `Max-Age`). Nếu không đặt, sẽ mất khi đóng trình duyệt (Session Cookie). | Tồn tại vĩnh viễn cho đến khi người dùng/code chủ động xóa (`localStorage.removeItem()`). | Mất đi khi người dùng tải lại trang (F5) hoặc đóng tab (trừ khi kết hợp với `redux-persist` để lưu xuống LocalStorage). |
+| **Bảo mật** | Có thể bảo vệ bằng các cờ như `HttpOnly`, `Secure`, `SameSite` để chống XSS và CSRF. | Dễ bị tổn thương trước tấn công **XSS** (bất kỳ đoạn mã JS nào chạy trên trang cũng đọc được). | An toàn trước các script bên ngoài, nhưng dữ liệu nhạy cảm vẫn cần cẩn trọng nếu lưu trữ lâu dài. |
+| **Mục đích sử dụng chính** | Xác thực người dùng (Authentication/Session ID), theo dõi (tracking), lưu trữ thông tin nhỏ cần gửi về server. | Lưu trữ cấu hình giao diện người dùng (theme sáng/tối), giỏ hàng tạm thời, token (nếu không quá khắt khe về bảo mật). | Quản lý trạng thái phức tạp dùng chung cho nhiều component (UI state, dữ liệu gọi từ API). |
+
+---
+
+## Chi tiết từng khái niệm
+
+### 1. Cookie
+* **Hoạt động:** Mỗi khi trình duyệt gửi một HTTP request đến server, toàn bộ Cookie hợp lệ của tên miền đó sẽ được đính kèm tự động trong header `Cookie`.
+* **Điểm nổi bật:** Là cơ chế duy nhất trong ba cái có khả năng giao tiếp trực tiếp với server qua HTTP headers.
+* **Ví dụ:** Lưu mã phiên đăng nhập (`session_id`) hoặc lưu trạng thái đồng ý cho phép sử dụng cookie của người dùng.
+
+### 2. LocalStorage
+* **Hoạt động:** Lưu trữ dữ liệu dạng key-value (dưới dạng chuỗi string) trực tiếp trên trình duyệt của người dùng.
+* **Điểm nổi bật:** Dung lượng lớn, lưu trữ bền vững ngay cả khi tắt trình duyệt hoặc tắt máy tính.
+* **Ví dụ:** Lưu chế độ giao diện (Dark Mode / Light Mode), ngôn ngữ hiển thị mặc định của người dùng (`vi`, `en`).
+
+### 3. Redux
+* **Hoạt động:** Quản lý dữ liệu tập trung (Store) trong bộ nhớ JavaScript của ứng dụng frontend (thường dùng với React). Các component có thể đọc (`useSelector`) và thay đổi (`useDispatch`) dữ liệu này.
+* **Điểm nổi bật:** Giúp đồng bộ hóa dữ liệu giữa các component phức tạp dễ dàng hơn, cung cấp cơ chế theo dõi thay đổi trạng thái (debugging tốt).
+* **Ví dụ:** Lưu danh sách sản phẩm trong giỏ hàng, thông tin profile của user sau khi đăng nhập thành công để hiển thị lên giao diện.
+
+---
+
+## Khi nào nên dùng cái nào?
+* Dùng **Cookie** khi bạn cần lưu thông tin **bắt buộc phải gửi lên server** (như token xác thực để kiểm tra quyền hạn).
+* Dùng **LocalStorage** khi bạn muốn **lưu trữ lâu dài** một lượng dữ liệu vừa phải ở phía client mà không cần gửi lên server mỗi lần request.
+* Dùng **Redux** khi bạn cần **quản lý trạng thái tương tác** phức tạp trong nội bộ ứng dụng ở client trong thời gian thực.
+
+------ khi dung rememberME -> luu tu sesionstorage sang localstorage
+# Hướng dẫn phân biệt và sử dụng các loại Storage trong lập trình Web
+
+Trong lập trình web, các bộ lưu trữ phía client có các mục đích và đặc điểm riêng. Dưới đây là bảng phân loại chi tiết giúp ông dễ dàng nhận biết **khi nào nên dùng cái nào**:
+
+## 1. Bảng so sánh chi tiết các loại Storage
+
+| Loại Storage | Dung lượng tối đa | Thời gian sống (Expiration) | Phạm vi truy cập (Scope) | Dùng để làm gì? |
+| :--- | :--- | :--- | :--- | :--- |
+| **LocalStorage** | ~5MB - 10MB | **Vĩnh viễn** (Chỉ mất khi người dùng tự xóa hoặc code xóa) | Cùng Origin (chung domain, protocol, port) | Lưu các cài đặt cá nhân hóa (Dark/Light mode, ngôn ngữ), token đăng nhập khi chọn "Nhớ mật khẩu", giỏ hàng tạm thời. |
+| **SessionStorage** | ~5MB - 10MB | **Theo phiên** (Tự động xóa khi đóng tab hoặc đóng trình duyệt) | Theo từng tab/window riêng biệt | Lưu trạng thái form dang dở, dữ liệu tạm thời chỉ dùng trong 1 luồng làm việc của tab đó. |
+| **Cookies** | ~4KB | **Tùy chỉnh** (Do server hoặc client đặt thời gian hết hạn `Expires`) | Theo domain (có thể cấu hình chia sẻ cho sub-domain) | Lưu trữ các thông tin **bắt buộc phải gửi lên Server** qua HTTP Header (ví dụ: Refresh Token dạng `HttpOnly`, mã xác thực phiên đăng nhập bảo mật, tracking ID). |
+
+---
+
+## 2. Hướng dẫn nhanh: Khi nào dùng cái nào?
+
+### 📌 Dùng `LocalStorage` khi:
+* Ông muốn dữ liệu **vẫn còn nguyên** ngay cả khi người dùng tắt hẳn trình duyệt, tắt máy tính rồi bật lại hôm sau.
+* **Ví dụ thực tế:** 
+  * Lưu cấu hình giao diện (Dark/Light mode).
+  * Lưu token đăng nhập khi người dùng tích chọn "Nhớ mật khẩu" (Remember me).
+
+### 📌 Dùng `SessionStorage` khi:
+* Ông chỉ cần lưu dữ liệu **trong lúc user đang thao tác ở tab đó**, và muốn **tự động dọn sạch** khi họ tắt tab đi để không bị rác dữ liệu hay lẫn lộn giữa các tab với nhau.
+* **Ví dụ thực tế:** 
+  * Người dùng mở nhiều tab mua hàng khác nhau, mỗi tab có một bước thanh toán hoặc dữ liệu form tạm riêng biệt không muốn bị ảnh hưởng lẫn nhau.
+
+### 📌 Dùng `Cookies` khi:
+* Ông cần gửi dữ liệu đó **về cho Backend (Server)** ở mọi request HTTP. Rất quan trọng đối với các token bảo mật cao (như `HttpOnly Cookie` để chống tấn công XSS, hoặc lưu thông tin xác thực phiên làm việc phía server).
+* **Ví dụ thực tế:** 
+  * Lưu Refresh Token bảo mật cao mà mã độc JavaScript phía client không được phép đọc trực tiếp.

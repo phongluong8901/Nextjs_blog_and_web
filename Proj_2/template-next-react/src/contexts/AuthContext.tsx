@@ -18,6 +18,9 @@ import { setLocalUserData, clearLocalUserData } from 'src/helpers/storage'
 import { AuthValuesType, LoginParams, ErrCallbackType, UserDataType } from './types'
 import { loginAuth } from 'src/services/auth'
 
+// ** Third Party Components
+import toast from 'react-hot-toast'
+
 // ** Defaults
 const defaultProvider: AuthValuesType = {
   user: null,
@@ -45,15 +48,21 @@ const AuthProvider = ({ children }: Props) => {
   useEffect(() => {
     let isMounted = true
     const initAuth = async (): Promise<void> => {
-      const storedToken = window.localStorage.getItem(authConfig.storageTokenKeyName)
+      // Check ở cả localStorage lẫn sessionStorage để không bị văng khi F5
+      const storedToken =
+        window.localStorage.getItem(authConfig.storageTokenKeyName) ||
+        window.sessionStorage.getItem(authConfig.storageTokenKeyName)
+
       if (storedToken) {
         try {
-          // Sử dụng instanceAxios và endpoint ME để tự động đính kèm token và base URL
           const response = await instanceAxios.get(CONFIG_API.AUTH.ME)
 
           if (isMounted) {
-            const data = response.data.userData || response.data.user || response.data
-            setUser({ ...data })
+            // ✅ Bóc tách đúng tầng response.data.data theo cấu trúc JSON của server
+            const resData = response.data
+            const userData = resData.data || resData.userData || resData.user || resData
+
+            setUser({ ...userData })
             setLoading(false)
           }
         } catch {
@@ -78,20 +87,24 @@ const AuthProvider = ({ children }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleLogin = async (params: LoginParams, errorCallback?: ErrCallbackType) => {
+  const handleLogin = async (params: LoginParams & { rememberMe?: boolean }, errorCallback?: ErrCallbackType) => {
     try {
       const res = await loginAuth({
         email: params.email,
         password: params.password,
       })
 
-      const responseData = res.data
-      const token = responseData.access_token || responseData.token
-      const refreshToken = responseData.refresh_token
-      const userData = responseData.userData || responseData.user || responseData
+      const resData = res.data
+      const loginPayload = resData.data || resData
 
-      setLocalUserData(JSON.stringify(userData), token, refreshToken)
+      const token = loginPayload.access_token || loginPayload.token || resData.access_token
+      const userData = loginPayload.user || loginPayload.userData || loginPayload
+
+      // Truyền cờ rememberMe để phân loại lưu trữ AccessToken vào LocalStorage hoặc SessionStorage
+      setLocalUserData(JSON.stringify(userData), token, Boolean(params.rememberMe))
       setUser({ ...userData })
+
+      toast.success('Đăng nhập thành công!')
 
       const returnUrl = router.query.returnUrl
       const redirectURL = returnUrl && returnUrl !== '/' ? (returnUrl as string) : '/'
@@ -105,6 +118,7 @@ const AuthProvider = ({ children }: Props) => {
   const handleLogout = () => {
     setUser(null)
     clearLocalUserData()
+    toast.success('Đăng xuất thành công!')
     router.push('/login')
   }
 

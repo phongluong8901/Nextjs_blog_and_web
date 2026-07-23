@@ -4,12 +4,13 @@ import Box, { BoxProps } from '@mui/material/Box'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useSettings } from 'src/hooks/useSettings'
 
-// ** Hook Import
-
-const ReactHotToast = styled(Box)<BoxProps>(({ theme }) => {
+const StyledReactHotToast = styled(Box)<BoxProps>(({ theme }) => {
   // ** Hook & Var
   const { settings } = useSettings()
   const { layout, navHidden } = settings
+
+  // 🛠️ Thêm log kiểm tra xem component Toast wrapper có render và lấy đúng settings không
+  // console.log('🎨 [ReactHotToast Wrapper] Rendered with settings:', { layout, navHidden, toastPosition: settings?.toastPosition })
 
   return {
     '& > div': {
@@ -36,5 +37,9 @@ const ReactHotToast = styled(Box)<BoxProps>(({ theme }) => {
     }
   }
 })
+
+const ReactHotToast = ({ children }: { children: React.ReactNode }) => {
+  return <StyledReactHotToast>{children}</StyledReactHotToast>
+}
 
 export default ReactHotToast

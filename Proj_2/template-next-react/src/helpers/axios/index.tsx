@@ -18,8 +18,11 @@ type TAxiosInterceptor = {
     children: ReactNode
 }
 
-// Khởi tạo instance axios
-const instanceAxios = axios.create({ baseURL: BASE_URL })
+// Khởi tạo instance axios (Bật withCredentials để trình duyệt tự động gửi/nhận Cookie)
+const instanceAxios = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true // 👈 Bắt buộc phải có để truyền HttpOnly Cookie qua lại giữa FE và BE
+})
 
 const handleRedirectLogin = (router: NextRouter, setUser: (data: UserDataType | null) => void) => {
     if (router.asPath !== '/') {
@@ -36,7 +39,9 @@ const handleRedirectLogin = (router: NextRouter, setUser: (data: UserDataType | 
 
 const AxiosInterceptor: FC<TAxiosInterceptor> = ({ children }) => {
     const router = useRouter()
-    const { accessToken, refreshToken } = getLocalUserData()
+
+    // Chỉ lấy accessToken (vì refreshToken giờ đã nằm trong HttpOnly Cookie bảo mật)
+    const { accessToken } = getLocalUserData()
     const { setUser } = useAuth()
 
     // 1. Request Interceptor: Gắn Token vào Header trước khi gửi request
@@ -46,15 +51,14 @@ const AxiosInterceptor: FC<TAxiosInterceptor> = ({ children }) => {
                 config.headers.Authorization = `Bearer ${accessToken}`
             }
 
-            // --- THÊM ĐOẠN NÀY ĐỂ XỬ LÝ FORM-DATA (UPLOAD ẢNH) ---
+            // --- XỬ LÝ FORM-DATA (UPLOAD ẢNH) ---
             if (config.data instanceof FormData) {
                 // Xóa Content-Type để Axios tự động tạo boundary chuẩn cho form-data kèm file
                 delete config.headers['Content-Type']
             } else {
-                // Các request thông thường (JSON) thì giữ nguyên application/json nếu cần
+                // Các request thông thường (JSON)
                 config.headers['Content-Type'] = 'application/json'
             }
-            // ----------------------------------------------------
 
             return config
         },

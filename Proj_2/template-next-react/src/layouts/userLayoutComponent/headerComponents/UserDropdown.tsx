@@ -18,7 +18,7 @@ import { Icon } from '@iconify/react'
 // ** Third Party Imports
 import { useTranslation } from 'react-i18next'
 
-// ** Hooks
+// ** Hooks (Tuỳ dự án ông dùng useAuth từ Context hay useSelector từ Redux, ở đây tôi dùng useAuth chuẩn template)
 import { useAuth } from 'src/hooks/useAuth'
 import { useSettings } from 'src/hooks/useSettings'
 
@@ -44,7 +44,7 @@ const UserDropdown = () => {
         logout()
     }
 
-    // Map giá trị themeColor từ context sang mã màu hex cho Avatar
+    // Map màu nền cho avatar fallback nếu chưa có ảnh
     const primaryColorMap: Record<string, string> = {
         primary: '#7367F0',
         success: '#28C76F',
@@ -55,26 +55,36 @@ const UserDropdown = () => {
 
     const currentAvatarBg = primaryColorMap[settings.themeColor] || '#7367F0'
 
-    // Xử lý linh hoạt thông tin từ object user
     const uAny = user as any
-    const displayName = uAny?.firstName
-        ? `${uAny.firstName} ${uAny?.lastName || ''}`
-        : uAny?.fullName || uAny?.name || uAny?.username || t('User Account')
-
-    // Dòng chính hiển thị email
     const displayEmail = uAny?.email || uAny?.username || 'user@domain.com'
-
-    // Dòng phụ hiển thị phân quyền (role)
     const userRole = uAny?.role?.name || uAny?.role || 'Basic'
+    const displayName = uAny?.firstName ? `${uAny.firstName} ${uAny?.lastName || ''}` : displayEmail
 
-    // Lấy ký tự đầu để hiển thị lên Avatar
+    // ==========================================
+    // XỬ LÝ LẤY VÀ FORMAT ĐƯỜNG DẪN ẢNH AVATAR
+    // ==========================================
+    const rawAvatar = uAny?.avatar || uAny?.image || uAny?.profilePicture || ''
+    const apiHostname = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000' // Thay bằng URL API của ông nếu cần
+
+    let userAvatar = ''
+    if (rawAvatar) {
+        if (rawAvatar.startsWith('http') || rawAvatar.startsWith('blob:')) {
+            userAvatar = rawAvatar
+        } else {
+            const cleanBase = apiHostname.endsWith('/') ? apiHostname.slice(0, -1) : apiHostname
+            const cleanPath = rawAvatar.startsWith('/') ? rawAvatar : `/${rawAvatar}`
+            userAvatar = `${cleanBase}${cleanPath}`
+        }
+    }
+
+    // Lấy ký tự đầu tiên để hiển thị phòng hờ chưa có ảnh hoặc lỗi link
     const avatarLetter = (uAny?.firstName?.[0] || uAny?.fullName?.[0] || uAny?.name?.[0] || uAny?.email?.[0] || 'U').toUpperCase()
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' }, mr: 1.5 }}>
                 <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-                    {displayEmail}
+                    {displayName}
                 </Typography>
                 <Typography variant='caption' color='text.secondary' sx={{ textTransform: 'capitalize' }}>
                     {userRole}
@@ -83,8 +93,13 @@ const UserDropdown = () => {
 
             <Tooltip title={t('Profile')}>
                 <IconButton onClick={handleOpen} size='small' sx={{ ml: 0.5 }}>
-                    <Avatar sx={{ width: 40, height: 40, bgcolor: currentAvatarBg, fontWeight: 'bold' }}>
-                        {avatarLetter}
+                    {/* Component Avatar của MUI tự động hiển thị ảnh nếu src hợp lệ, ngược lại sẽ hiện nội dung bên trong */}
+                    <Avatar
+                        src={userAvatar}
+                        alt={displayName}
+                        sx={{ width: 40, height: 40, bgcolor: currentAvatarBg, fontWeight: 'bold' }}
+                    >
+                        {!userAvatar && avatarLetter}
                     </Avatar>
                 </IconButton>
             </Tooltip>

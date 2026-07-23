@@ -159,7 +159,7 @@ const LoginPage: NextPage<TProps> = () => {
             {
                 email: data.email,
                 password: data.password,
-                rememberMe: data.remember,
+                rememberMe: data.remember, // 👈 Truyền vào rememberMe (lấy giá trị từ checkbox data.remember của form)
             },
             (err) => {
                 setLoading(false)

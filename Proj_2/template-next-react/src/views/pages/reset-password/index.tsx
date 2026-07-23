@@ -35,7 +35,7 @@ import {
 import CustomTextField from 'src/components/text-field'
 
 // ** Import Service gọi API đổi mật khẩu
-import { resetPasswordAuth } from 'src/services/auth'
+
 
 // ** Import ảnh Light / Dark Mode
 import ResetDark from '/public/images/register-dark.png'
