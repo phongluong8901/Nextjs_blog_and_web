@@ -1,4 +1,5 @@
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://nextjs-blog-and-web.onrender.com/api'
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://nextjs-blog-and-web.onrender.com/api'
+export const BASE_URL = 'https://nextjs-blog-and-web.onrender.com/api'
 
 if (typeof window !== 'undefined') {
   console.log('GIÁ TRỊ THỰC TẾ TRÊN VERCEL:', process.env.NEXT_PUBLIC_API_URL)
