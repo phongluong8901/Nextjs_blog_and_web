@@ -58,7 +58,7 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password} = req.body;
+    const { email, password } = req.body;
     const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const REGEX_PASSWORD =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
@@ -89,6 +89,7 @@ const loginUser = async (req, res) => {
           'The password must be at least 6 characters long and include uppercase letters, lowercase letters, numbers, and special characters."',
       });
     }
+
     const response = await AuthService.loginUser(req.body);
     const {
       data,
@@ -99,18 +100,24 @@ const loginUser = async (req, res) => {
       access_token,
       refresh_token,
     } = response;
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      path: "/",
-    });
+
+    // 🎯 CHỈ SET COOKIE KHI ĐĂNG NHẬP THÀNH CÔNG (status === 200 hoặc Action Success)
+    if (status === CONFIG_MESSAGE_ERRORS.ACTION_SUCCESS.status && refresh_token) {
+      res.cookie("refresh_token", refresh_token, {
+        httpOnly: true, // 👈 Chống XSS tuyệt đối, JS client không đọc được
+        secure: false,  // Để false vì đang chạy localhost (nếu lên production chạy HTTPS thì đổi thành true)
+        sameSite: "strict",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // Hạn 7 ngày
+      });
+    }
+
     return res.status(status).json({
       typeError,
       data: {
         user: data,
         access_token,
-        refresh_token,
+        // ❌ ĐÃ BỎ refresh_token ở đây để ép buộc lưu qua HttpOnly Cookie!
       },
       message,
       status: statusMessage,
@@ -192,13 +199,17 @@ const getAuthMe = async (req, res) => {
   }
 };
 
+
 const updateAuthMe = async (req, res) => {
   try {
     const userId = req.userId;
     const isPermission = req.isPermission;
+    const file = req.file;
+
     const response = await AuthService.updateAuthMe(
       userId,
       req.body,
+      file,
       isPermission
     );
     const { data, status, typeError, message, statusMessage } = response;
@@ -493,5 +504,5 @@ module.exports = {
   registerFacebook,
   loginGoogle,
   loginFacebook,
-  updateDeviceToken
+  updateDeviceToken,
 };

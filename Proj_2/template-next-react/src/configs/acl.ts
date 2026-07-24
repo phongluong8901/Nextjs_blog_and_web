@@ -11,20 +11,42 @@ export type ACLObj = {
   subject: string
 }
 
-/**
- * Please define your own Ability rules according to your app requirements.
- * We have just shown Admin and Client rules for demo purpose where
- * admin can manage everything and client can just visit ACL page
- */
-const defineRulesFor = (role: string, subject: string) => {
-  const { can, rules } = new AbilityBuilder(AppAbility)
+// ==========================================
+// 1. CẤU HÌNH DANH SÁCH SUBJECT THEO 3 TRẠNG THÁI
+// ==========================================
+const ONLY_ADMIN_SUBJECTS = ['admin-page', 'admin-dashboard', 'user-management']
 
-  if (role === 'admin') {
+const ONLY_USER_SUBJECTS = ['userHome-page']
+
+const defineRulesFor = (role: string, subject: string) => {
+  const { can, cannot, rules } = new AbilityBuilder(AppAbility)
+
+  const normalizedRole = role ? role.toLowerCase() : 'basic'
+  const isAdmin = normalizedRole === 'admin'
+  const isUser = normalizedRole === 'client' || normalizedRole === 'basic'
+
+  if (isAdmin) {
+    // Admin có toàn quyền quản trị
     can('manage', 'all')
-  } else if (role === 'client') {
-    can(['read'], 'acl-page')
-  } else {
+
+    // NHƯNG bị chặn tuyệt đối không được vào các trang Only User
+    ONLY_USER_SUBJECTS.forEach(sub => {
+      cannot('manage', sub)
+      cannot('read', sub)
+    })
+  } else if (isUser) {
+    // User (Client/Basic) có quyền thao tác cơ bản trên subject hiện tại hoặc chung
     can(['read', 'create', 'update', 'delete'], subject)
+    can('manage', 'all')
+
+    // NHƯNG bị chặn tuyệt đối không được vào các trang Only Admin
+    ONLY_ADMIN_SUBJECTS.forEach(sub => {
+      cannot('manage', sub)
+      cannot('read', sub)
+    })
+  } else {
+    // Role khác (guest, v.v.) chỉ được đọc
+    can(['read'], subject)
   }
 
   return rules
@@ -32,7 +54,6 @@ const defineRulesFor = (role: string, subject: string) => {
 
 export const buildAbilityFor = (role: string, subject: string): AppAbility => {
   return new AppAbility(defineRulesFor(role, subject), {
-    // https://casl.js.org/v5/en/guide/subject-type-detection
     // @ts-ignore
     detectSubjectType: object => object!.type
   })

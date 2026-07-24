@@ -85,5 +85,31 @@ Thống kê sản phẩm
 #-----------
 
 
+#-----------
+
+---
 git checkout -b after_setup_of_main
 git push -u origin after_setup_of_main
+
+--- cicd github action to vercel
+git checkout -b master
+git add .
+git commit -m "20/07/2026"
+git push -u origin master
+
+--- push auto cici for FE
+git add .
+git commit -m "change: login, singup"
+git push -u origin master
+
+---
+git checkout -b 22/07/2026
+git add .
+git commit -m "change: theme, lng, my-profile, forgot-password"
+git push -u origin 22/07/2026
+
+--- push auto cicd for BE
+git checkout -b master-be
+git add .
+git commit -m "change: login, singup"
+git push -u origin master-be

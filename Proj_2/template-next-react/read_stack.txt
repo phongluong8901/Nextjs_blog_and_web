@@ -1,0 +1,35 @@
+#--- Auth Guard
+Việc có thêm AuthGuard so với không có tạo ra sự khác biệt cốt lõi giữa khu vực công khai (Public) và khu vực bảo mật yêu cầu đăng nhập (Private/Protected) trong ứng dụng.
+
+Cụ thể các điểm khác biệt lớn nhất bao gồm:
+
+1. Kiểm tra trạng thái xác thực (Authentication Check)
+Không có AuthGuard:
+
+Bất kỳ ai (dù chưa đăng nhập, chưa có tài khoản, hoặc phiên đăng nhập đã hết hạn) khi gõ URL đều có thể truy cập thẳng vào trang đó.
+
+Nếu trang đó gọi các API ngầm yêu cầu token, hệ thống sẽ dễ bị lỗi 401 Unauthorized từ phía server hoặc gây crash giao diện (văng lỗi Cannot read properties of undefined).
+
+Có AuthGuard:
+
+Hệ thống sẽ kiểm tra xem người dùng đã có token hoặc đã đăng nhập chưa (thường thông qua auth.user hoặc token lưu trong kho lưu trữ).
+
+Nếu chưa đăng nhập, hệ thống sẽ tự động chặn lại và điều hướng (redirect) người dùng về trang Đăng nhập (/login), kèm theo đường dẫn trang hiện tại để sau khi đăng nhập xong, hệ thống có thể chuyển họ quay lại đúng trang đó.
+
+2. Trải nghiệm tải trang (Loading & Fallback)
+Không có AuthGuard: Giao diện trang chủ admin có thể bị load "chớp nhoáng" lên trong tích tắc rồi mới chuyển hướng, gây cảm giác giật cục và mất an toàn bảo mật dữ liệu.
+
+Có AuthGuard: Trong lúc hệ thống đang gọi API xác thực ngầm (ví dụ: dùng token ở LocalStorage để gọi hàm getMe() lấy thông tin user), AuthGuard sẽ hiển thị một màn hình chờ mượt mà (FallbackSpinner - vòng xoay loading) để người dùng không thấy nội dung nhạy cảm của trang trước khi được xác thực.
+
+#--- Acl Guard
+Việc có thêm AclGuard (Access Control List) so với không có sẽ tạo ra một lớp bảo vệ toàn diện và linh hoạt hơn cho ứng dụng, đặc biệt là các trang quản trị (Admin Dashboard). Cụ thể các điểm khác biệt cốt lõi:
+
+1. Phân quyền chi tiết theo Hành động và Chủ thể (Action & Subject)
+Không có ACL: Hệ thống chỉ kiểm tra xem người dùng đã đăng nhập chưa (AuthGuard). Nếu đã đăng nhập, người dùng có thể truy cập vào bất kỳ trang nào tồn tại trong mã nguồn (miễn là biết đường dẫn URL).
+
+Có ACL: Ngoài việc kiểm tra đã đăng nhập, hệ thống còn kiểm tra xem user đó có quyền thực hiện hành động cụ thể trên tài nguyên cụ thể đó không (Ví dụ: admin được phép manage tất cả, nhưng client hoặc staff chỉ được read trang quản lý người dùng).
+
+2. Xử lý tự động khi không đủ quyền (Chặn trước khi render)
+Không có ACL: Nếu user không có quyền xem trang quản trị viên, giao diện trang đó vẫn có thể bị "nháy" lên một phần trước khi người dùng kịp nhận ra hoặc bị lỗi API ngầm do thiếu quyền.
+
+Có ACL: Ngay khi định tuyến (router) chuyển trang, AclGuard sẽ chặn lại, tự động chuyển hướng hoặc hiển thị thẳng trang báo lỗi chuẩn 401 Not Authorized trong giao diện BlankLayout, giữ cho trải nghiệm người dùng chuyên nghiệp và bảo mật hơn.

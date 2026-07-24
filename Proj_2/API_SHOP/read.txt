@@ -1,0 +1,12 @@
+#--- diagram
+index.js -> routes -> middleware -> controller -> services -> model
+
+--- install them
+yarn add multer-storage-cloudinary cloudinary multer
+yarn add streamifier
+
+--- run
+yarn start
+
+--- swagger
+http://localhost:3001/swagger/

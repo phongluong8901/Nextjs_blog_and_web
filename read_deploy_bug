@@ -1,0 +1,15 @@
+--- MongoDB Atlas của bạn đang chặn kết nối từ IP của Vercel Serverless
+https://cloud.mongodb.com/v2/6a5d992fc51e79adf29e5794#/security/network/accessList
+
+MongoDB Atlas của bạn đang chặn kết nối từ IP của Vercel Serverless. Vì Vercel dùng hệ thống cloud dynamic IP liên tục thay đổi, cluster MongoDB của bạn chưa mở quyền cho phép mọi IP truy cập.
+
+🛠 Cách khắc phục triệt để trong 1 phút:
+Đăng nhập vào trang quản lý MongoDB Atlas.
+
+Nhìn sang menu bên trái, chọn mục Network Access (thuộc phần Security).
+
+Bấm vào nút Add IP Address.
+
+Bấm vào nút Allow Access From Anywhere (hệ thống sẽ tự điền vào dải IP 0.0.0.0/0).
+
+Bấm Confirm để lưu lại.

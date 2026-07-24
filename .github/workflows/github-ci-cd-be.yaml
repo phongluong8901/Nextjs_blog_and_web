@@ -1,0 +1,50 @@
+name: CI/CD Backend Pipeline
+
+on:
+  push:
+    branches:
+      - master-be
+    paths:
+      - "Proj_2/API_SHOP/**"
+  workflow_dispatch:
+
+jobs:
+  ci-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Proj_2/API_SHOP
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies (Yarn)
+        run: yarn install --frozen-lockfile
+
+  deploy-to-render:
+    needs: ci-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          echo "CI Passed successfully! Triggering Render deployment..."
+          response=$(curl --silent --write-out "HTTP_STATUS:%{http_code}" --request POST \
+            --url https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+            --header "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            --header "Content-Type: application/json")
+
+          http_status=$(echo "$response" | tr -d '\n' | sed -E 's/.*HTTP_STATUS:([0-9]{3})$/\1/')
+
+          if [ "$http_status" -eq 201 ] || [ "$http_status" -eq 200 ]; then
+            echo "Successfully triggered Render deployment!"
+          else
+            echo "Failed to trigger deployment. HTTP Status: $http_status"
+            exit 1
+          fi

@@ -7,7 +7,11 @@ info:
     email: lttd0204@gmail.com
   version: 1.0.11
 servers:
-  - url: https://api-shop-lks2.onrender.com/
+  # - url: https://api-shop-lks2.onrender.com/ 
+    - url: https://nextjs-blog-and-web.onrender.com/
+      description: Production Server
+    - url: http://localhost:3001/
+      description: Local Server
 tags:
   - name: auth
     description: Everything about auth
