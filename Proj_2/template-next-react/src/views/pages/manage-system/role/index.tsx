@@ -6,13 +6,9 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import toast from 'react-hot-toast'
-import Header from './component/Header'
-import CardOptional from './component/CardOptional'
 import CustomModal from 'src/components/custom-modal'
 import ConfirmDeleteModal from 'src/components/confirm-delete-modal'
 import CustomConfirmDialog from 'src/components/custom-confirm-dialog'
-import GridTable from './component/GridTable'
-import CardRole from './component/CardRole'
 
 // ** Redux Imports
 import { useDispatch, useSelector } from 'react-redux'
@@ -23,6 +19,11 @@ import {
     updateRoleAsync,
     deleteRoleAsync
 } from 'src/stores/apps/role/actions'
+import PermissionTable from './component/PermissionTable'
+import CardOptional from './component/CardOptional'
+import Header from './component/Header'
+import GridTable from './component/GridTable'
+import CardRole from './component/CardRole'
 
 const RoleManagementPage: NextPage = () => {
     const theme = useTheme()
@@ -65,37 +66,33 @@ const RoleManagementPage: NextPage = () => {
 
     // ** Fetch initial role list
     useEffect(() => {
-        dispatch(fetchRolesAsync())
+        dispatch(fetchRolesAsync({} as any))
     }, [dispatch])
 
     const schema = useMemo(() => {
         return yup.object().shape({
             name: yup.string().required(t('validation.nameRequired', 'Please enter a role name.')),
-            code: yup.string().optional(),
-            description: yup.string().optional(),
         })
     }, [t, i18n.language])
 
     type TFormInputs = yup.InferType<typeof schema>
 
     const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<TFormInputs>({
-        defaultValues: { name: '', code: '', description: '' },
+        defaultValues: { name: '' },
         resolver: yupResolver(schema),
     })
 
     const handleEdit = (row: any) => {
         setIsEdit(true)
         setSelectedRow(row)
-        setValue('code', row.code || '')
         setValue('name', row.name || '')
-        setValue('description', row.description || '')
         setOpenModal(true)
     }
 
     const handleAdd = () => {
         setIsEdit(false)
         setSelectedRow(null)
-        reset({ code: '', name: '', description: '' })
+        reset({ name: '' })
         setOpenModal(true)
     }
 
@@ -112,7 +109,7 @@ const RoleManagementPage: NextPage = () => {
             if (selectedRoleId === targetId) setSelectedRoleId(null)
             toast.success('Xóa vai trò thành công!')
             setOpenDeleteModal(false)
-            dispatch(fetchRolesAsync())
+            dispatch(fetchRolesAsync({} as any))
         } catch (error: any) {
             toast.error(error?.message || 'Xóa vai trò thất bại!')
         }
@@ -121,8 +118,7 @@ const RoleManagementPage: NextPage = () => {
     const onSubmit = (data: TFormInputs) => {
         const formattedData = {
             ...data,
-            code: data.code || '',
-            description: data.description || '',
+            name: data.name || '',
         }
         setPendingFormData(formattedData)
         setOpenConfirmDialog(true)
@@ -142,7 +138,7 @@ const RoleManagementPage: NextPage = () => {
             setOpenConfirmDialog(false)
             setOpenModal(false)
             reset()
-            dispatch(fetchRolesAsync())
+            dispatch(fetchRolesAsync({} as any))
         } catch (error: any) {
             toast.error(error?.message || t('common.updateFailed', 'Operation failed.'))
         }
@@ -150,12 +146,13 @@ const RoleManagementPage: NextPage = () => {
 
     const filteredRows = roles.filter((r: any) => {
         const matchesSearch =
-            r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            r.code?.toLowerCase().includes(searchTerm.toLowerCase())
+            r.name?.toLowerCase().includes(searchTerm.toLowerCase())
         const matchesCard = selectedRoleId ? (r.id === selectedRoleId || r._id === selectedRoleId) : true
 
         return matchesSearch && matchesCard
     })
+
+    const selectedRoleData = roles.find((r: any) => r.id === selectedRoleId || r._id === selectedRoleId)
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, width: '100%', gap: 3, p: 3 }}>
@@ -178,7 +175,26 @@ const RoleManagementPage: NextPage = () => {
                 addLabel='Thêm vai trò'
             />
 
-            <GridTable rows={filteredRows} loading={loading} onEdit={handleEdit} onDelete={(row) => handleDeleteClick(row)} />
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    gap: 3,
+                    alignItems: 'stretch'
+                }}
+            >
+                <Box sx={{ flex: { xs: '1 1 100%', lg: '1 1 50%' }, minWidth: 0 }}>
+                    <GridTable
+                        rows={filteredRows}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onDelete={(row) => handleDeleteClick(row)}
+                    />
+                </Box>
+                <Box sx={{ flex: { xs: '1 1 100%', lg: '1 1 50%' }, minWidth: 0 }}>
+                    <PermissionTable selectedRole={selectedRoleData} />
+                </Box>
+            </Box>
 
             <CustomModal
                 open={openModal}

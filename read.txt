@@ -113,3 +113,9 @@ git checkout -b master-be
 git add .
 git commit -m "change: login, singup"
 git push -u origin master-be
+
+---
+git checkout -b 24/07/2026
+git add .
+git commit -m "change: login, register, forgot password, change passowrd, profile, role, user, city, delivery, payment"
+git push -u origin 24/07/2026

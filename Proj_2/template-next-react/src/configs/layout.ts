@@ -4,8 +4,8 @@ export const VerticalItems = [
   {
     title: 'Quản lý hệ thống',
     icon: 'icon-system',
+    role: 'Admin', // <--- Chỉ Admin mới thấy cả cụm menu này (hoặc phân quyền chi tiết từng item bên dưới)
     children: [
-      // <-- Sửa thành children
       {
         title: 'Quản lý vai trò',
         icon: 'carbon:user-role',
@@ -21,8 +21,9 @@ export const VerticalItems = [
   {
     title: 'Quản lý sản phẩm',
     icon: 'icon-product',
+
+    // Nếu không để role ở cha, bạn có thể áp dụng cho từng children bên dưới nếu cần
     children: [
-      // <-- Sửa thành children
       {
         title: 'Quản lý sản phẩm',
         icon: 'carbon:product',
@@ -43,8 +44,8 @@ export const VerticalItems = [
   {
     title: 'Cài đặt',
     icon: 'ant-design:setting-outlined',
+    role: 'Admin', // <--- Cài đặt hệ thống thường chỉ Admin mới được vào
     children: [
-      // <-- Sửa thành children
       {
         title: 'Cài đặt thành phố',
         icon: 'solar:city-outline',

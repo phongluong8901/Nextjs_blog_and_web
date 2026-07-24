@@ -33,3 +33,14 @@ Có ACL: Ngoài việc kiểm tra đã đăng nhập, hệ thống còn kiểm t
 Không có ACL: Nếu user không có quyền xem trang quản trị viên, giao diện trang đó vẫn có thể bị "nháy" lên một phần trước khi người dùng kịp nhận ra hoặc bị lỗi API ngầm do thiếu quyền.
 
 Có ACL: Ngay khi định tuyến (router) chuyển trang, AclGuard sẽ chặn lại, tự động chuyển hướng hoặc hiển thị thẳng trang báo lỗi chuẩn 401 Not Authorized trong giao diện BlankLayout, giữ cho trải nghiệm người dùng chuyên nghiệp và bảo mật hơn.
+
+---
+## 1. Phân định rõ nhiệm vụ của từng "Guard" và "Permission"
+
+| Thành phần | Tầng xử lý chính | Nhiệm vụ cụ thể trên Frontend |
+| :--- | :--- | :--- |
+| **GuestGuard** | Route / Page Level | • Dành cho khách vãng lai (chưa đăng nhập).<br>• **Nhiệm vụ:** Ngăn chặn người dùng đã đăng nhập truy cập lại trang Login hoặc Register (nếu cố tình vào sẽ bị đá ngược về trang chủ/dashboard). |
+| **AuthGuard** | Route / Page Level | • Kiểm tra xem người dùng đã đăng nhập chưa (thường dựa vào Token/Session trong LocalStorage, Cookie hoặc Redux store).<br>• **Nhiệm vụ:** Nếu chưa đăng nhập, chuyển hướng (redirect) ngay lập tức về trang Login. |
+| **AclGuard** | Route / Layout Level | • Kiểm tra Quyền truy cập trang (Role-based / Subject-Action) dựa trên cấu hình ACL (Access Control List) của từng Route/Ability.<br>• **Nhiệm vụ:** Nếu user đã đăng nhập nhưng không có quyền xem cả trang đó, hệ thống sẽ chuyển hướng sang trang 403 (Unauthorized) hoặc trang chủ. |
+| **Permission (Hook/Component)** | Component / UI Level | • Kiểm tra chi tiết đến từng thành phần nhỏ bên trong trang (Button, Tab, Form, Table columns).<br>• **Nhiệm vụ:** Dùng các hook như usePermission để ẩn/hiện hoặc vô hiệu hóa (disabled) các nút Thêm, Sửa, Xóa hoặc các vùng dữ liệu nhạy cảm. |
+

@@ -1,5 +1,5 @@
 // ** React Imports
-import { FC, ReactNode } from 'react'
+import { FC, ReactNode, useEffect } from 'react'
 
 // ** Next Imports
 import { NextRouter, useRouter } from 'next/router'
@@ -15,10 +15,10 @@ type TAxiosInterceptor = {
     children: ReactNode
 }
 
-// Khởi tạo instance axios (Bật withCredentials để trình duyệt tự động gửi/nhận Cookie)
+// Khởi tạo instance axios
 const instanceAxios = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true // 👈 Bắt buộc phải có để truyền HttpOnly Cookie qua lại giữa FE và BE
+    withCredentials: true
 })
 
 const handleRedirectLogin = (router: NextRouter, setUser: (data: UserDataType | null) => void) => {
@@ -34,48 +34,52 @@ const handleRedirectLogin = (router: NextRouter, setUser: (data: UserDataType | 
     clearLocalUserData()
 }
 
+// 1. Request Interceptor: Luôn lấy token mới nhất trước mỗi request
+instanceAxios.interceptors.request.use(
+    async config => {
+        // 👈 Lấy token trực tiếp ở đây để đảm bảo luôn đọc giá trị mới nhất từ storage
+        const { accessToken } = getLocalUserData()
+
+        if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+        }
+
+        // --- XỬ LÝ FORM-DATA (UPLOAD ẢNH) ---
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type']
+        } else {
+            config.headers['Content-Type'] = 'application/json'
+        }
+
+        return config
+    },
+    error => Promise.reject(error)
+)
+
 const AxiosInterceptor: FC<TAxiosInterceptor> = ({ children }) => {
     const router = useRouter()
-
-    // Chỉ lấy accessToken (vì refreshToken giờ đã nằm trong HttpOnly Cookie bảo mật)
-    const { accessToken } = getLocalUserData()
     const { setUser } = useAuth()
 
-    // 1. Request Interceptor: Gắn Token vào Header trước khi gửi request
-    instanceAxios.interceptors.request.use(
-        async config => {
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`
+    useEffect(() => {
+        // 2. Response Interceptor: Bắt lỗi token hết hạn (401)
+        const interceptor = instanceAxios.interceptors.response.use(
+            response => response,
+            async error => {
+                const originalRequest = error.config
+
+                if (error.response && error.response.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true
+                    handleRedirectLogin(router, setUser)
+                }
+
+                return Promise.reject(error)
             }
+        )
 
-            // --- XỬ LÝ FORM-DATA (UPLOAD ẢNH) ---
-            if (config.data instanceof FormData) {
-                // Xóa Content-Type để Axios tự động tạo boundary chuẩn cho form-data kèm file
-                delete config.headers['Content-Type']
-            } else {
-                // Các request thông thường (JSON)
-                config.headers['Content-Type'] = 'application/json'
-            }
-
-            return config
-        },
-        error => Promise.reject(error)
-    )
-
-    // 2. Response Interceptor: Bắt lỗi token hết hạn (401)
-    instanceAxios.interceptors.response.use(
-        response => response,
-        async error => {
-            const originalRequest = error.config
-
-            if (error.response && error.response.status === 401 && !originalRequest._retry) {
-                originalRequest._retry = true
-                handleRedirectLogin(router, setUser)
-            }
-
-            return Promise.reject(error)
+        return () => {
+            instanceAxios.interceptors.response.eject(interceptor)
         }
-    )
+    }, [router, setUser])
 
     return <>{children}</>
 }

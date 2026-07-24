@@ -5,7 +5,14 @@ import instanceAxios from 'src/helpers/axios'
 import { CONFIG_API } from 'src/configs/api'
 
 // ** Types
-import { TLoginAuth, TRegisterAuth } from 'src/types/auth'
+import {
+  TChangePasswordParams,
+  TLoginAuth,
+  TRegisterAuth,
+  TForgotPasswordParams,
+  TResetPasswordParams,
+  TUpdateAuthMeParams
+} from 'src/types/auth'
 
 export const loginAuth = async (data: TLoginAuth) => {
   try {
@@ -35,9 +42,8 @@ export const logoutAuth = async () => {
   }
 }
 
-export const updateAuthMe = async (data: any) => {
+export const updateAuthMe = async (data: TUpdateAuthMeParams) => {
   try {
-    // Thường cập nhật thông tin sẽ dùng phương thức PUT hoặc PATCH
     const res = await instanceAxios.put(CONFIG_API.AUTH.ME, data)
 
     return res.data
@@ -56,7 +62,7 @@ export const getAuthMe = async () => {
   }
 }
 
-export const forgotPasswordAuth = async (data: { email: string }) => {
+export const forgotPasswordAuth = async (data: TForgotPasswordParams) => {
   try {
     const res = await instanceAxios.post(CONFIG_API.AUTH.FORGOT_PASSWORD, data)
 
@@ -66,9 +72,19 @@ export const forgotPasswordAuth = async (data: { email: string }) => {
   }
 }
 
-export const resetPasswordAuth = async (data: { secretKey: string; newPassword: string }) => {
+export const resetPasswordAuth = async (data: TResetPasswordParams) => {
   try {
     const res = await instanceAxios.post(CONFIG_API.AUTH.RESET_PASSWORD, data)
+
+    return res.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const changePasswordAuth = async (data: TChangePasswordParams) => {
+  try {
+    const res = await instanceAxios.patch(CONFIG_API.AUTH.CHANGE_PASSWORD, data)
 
     return res.data
   } catch (error) {

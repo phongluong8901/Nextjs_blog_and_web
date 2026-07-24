@@ -1,80 +1,202 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { NextPage } from 'next'
 import { useTranslation } from 'react-i18next'
-import { Box, Card, Grid, Button, Divider, FormControl, FormLabel, Typography, useTheme } from '@mui/material'
-import { useForm, Controller } from 'react-hook-form'
+import { Box, Typography, useTheme } from '@mui/material'
+import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import CustomTextField from 'src/components/text-field'
 import toast from 'react-hot-toast'
+import { GridRowSelectionModel } from '@mui/x-data-grid'
 
-const CitySettingPage: NextPage = () => {
+import CustomModal from 'src/components/custom-modal'
+import ConfirmDeleteModal from 'src/components/confirm-delete-modal'
+
+import CityHeader from './component/CityHeader'
+import CityGridTable from './component/CityGridTable'
+import CardCityForm from './component/CardCityForm'
+
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from 'src/stores'
+import {
+    fetchCitiesAsync,
+    createCityAsync,
+    updateCityAsync,
+    deleteCityAsync
+} from 'src/stores/apps/city/actions'
+
+const CityManagementPage: NextPage = () => {
     const theme = useTheme()
     const { t, i18n } = useTranslation()
-    const [loading, setLoading] = useState<boolean>(false)
+
+    const dispatch = useDispatch<AppDispatch>()
+    const cityState = useSelector((state: RootState) => (state as any).city) || {}
+    const loading = cityState?.loading || false
+
+    const cities = (cityState?.cities || []).map((item: any) => ({
+        ...item,
+        id: item?._id || item?.id
+    }))
+
+    const [searchTerm, setSearchTerm] = useState('')
+    const [openModal, setOpenModal] = useState(false)
+    const [isEdit, setIsEdit] = useState(false)
+    const [selectedRow, setSelectedRow] = useState<any>(null)
+    const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>([])
+
+    const [openDeleteModal, setOpenDeleteModal] = useState(false)
+    const [cityToDelete, setCityToDelete] = useState<any>(null)
+    const [openDeleteMultipleModal, setOpenDeleteMultipleModal] = useState(false)
+
+    useEffect(() => {
+        dispatch(fetchCitiesAsync({}))
+    }, [dispatch])
 
     const schema = useMemo(() => {
         return yup.object().shape({
-            name: yup.string().required(t('validation.nameRequired', 'Please enter city name.')),
-            code: yup.string().required(t('validation.codeRequired', 'Please enter city code.')),
+            name: yup.string().required('Vui lòng nhập tên thành phố.'),
         })
     }, [t, i18n.language])
 
     type TFormInputs = yup.InferType<typeof schema>
 
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<TFormInputs>({
-        defaultValues: { name: '', code: '' },
+    const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<TFormInputs>({
+        defaultValues: { name: '' },
         resolver: yupResolver(schema),
     })
 
-    const onSubmit = async (data: TFormInputs) => {
+    const handleEdit = (row: any) => {
+        setIsEdit(true)
+        setSelectedRow(row)
+        setValue('name', row.name || '')
+        setOpenModal(true)
+    }
+
+    const handleAdd = () => {
+        setIsEdit(false)
+        setSelectedRow(null)
+        reset({ name: '' })
+        setOpenModal(true)
+    }
+
+    const handleDeleteClick = (row: any) => {
+        setCityToDelete(row)
+        setOpenDeleteModal(true)
+    }
+
+    const handleConfirmDelete = async () => {
         try {
-            setLoading(true)
-            console.log('City Data:', data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            toast.success(t('common.updateSuccess', 'Operation completed successfully!'))
+            const targetId = cityToDelete?.id || cityToDelete?._id
+            await dispatch(deleteCityAsync(targetId)).unwrap()
+            toast.success('Xóa thành phố thành công!')
+            setOpenDeleteModal(false)
+            setCityToDelete(null)
+            dispatch(fetchCitiesAsync({}))
         } catch (error: any) {
-            toast.error(t('common.updateFailed', 'Operation failed.'))
-        } finally {
-            setLoading(false)
+            toast.error(error?.message || 'Xóa thành phố thất bại!')
         }
     }
 
+    const handleDeleteMultipleClick = () => {
+        if (selectedRows.length === 0) return
+        setOpenDeleteMultipleModal(true)
+    }
+
+    const handleConfirmDeleteMultiple = async () => {
+        try {
+            await Promise.all(
+                selectedRows.map((id) => dispatch(deleteCityAsync(id)).unwrap())
+            )
+            toast.success(`Xóa thành công ${selectedRows.length} thành phố!`)
+            setOpenDeleteMultipleModal(false)
+            setSelectedRows([])
+            dispatch(fetchCitiesAsync({}))
+        } catch (error: any) {
+            toast.error(error?.message || 'Xóa hàng loạt thất bại!')
+        }
+    }
+
+    const onSubmit = async (data: TFormInputs) => {
+        try {
+            if (isEdit && selectedRow) {
+                const targetId = selectedRow.id || selectedRow._id
+                await dispatch(updateCityAsync({ id: targetId, data })).unwrap()
+                toast.success('Cập nhật thành phố thành công!')
+            } else {
+                await dispatch(createCityAsync(data)).unwrap()
+                toast.success('Thêm mới thành phố thành công!')
+            }
+
+            setOpenModal(false)
+            reset()
+            dispatch(fetchCitiesAsync({}))
+        } catch (error: any) {
+            toast.error(error?.message || 'Thất bại.')
+        }
+    }
+
+    const filteredRows = cities.filter((c: any) =>
+        c.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, width: '100%', gap: 3 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                {t('city.title', 'City Settings')}
+        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, width: '100%', gap: 3, p: 3 }}>
+            <Typography variant='h4' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                Quản lý Thành phố
             </Typography>
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={8}>
-                    <Card sx={{ p: 4, backgroundColor: theme.palette.background.paper }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary }}>
-                            {t('city.details', 'City Information')}
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            <FormControl fullWidth error={Boolean(errors.name)}>
-                                <FormLabel>{t('common.name', 'City Name')}</FormLabel>
-                                <Controller name="name" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} placeholder="Enter city name..." fullWidth error={Boolean(errors.name)} helperText={errors.name?.message} />
-                                )} />
-                            </FormControl>
-                            <FormControl fullWidth error={Boolean(errors.code)}>
-                                <FormLabel>{t('common.code', 'City Code')}</FormLabel>
-                                <Controller name="code" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} placeholder="Enter city code..." fullWidth error={Boolean(errors.code)} helperText={errors.code?.message} />
-                                )} />
-                            </FormControl>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                                <Button type="submit" variant="contained" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-                                <Button type="button" variant="outlined" color="secondary" onClick={() => reset()}>Reset</Button>
-                            </Box>
-                        </Box>
-                    </Card>
-                </Grid>
-            </Grid>
+
+            <CityHeader
+                searchTerm={searchTerm}
+                selectedCount={selectedRows.length}
+                onSearchChange={(e) => setSearchTerm(e.target.value)}
+                onClearSearch={() => setSearchTerm('')}
+                onAddClick={handleAdd}
+                onDeleteMultiple={handleDeleteMultipleClick}
+            />
+
+            <CityGridTable
+                rows={filteredRows}
+                loading={loading}
+                selectedRows={selectedRows}
+                onSelectionChange={(newSelection) => setSelectedRows(newSelection)}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+            />
+
+            <CustomModal
+                open={openModal}
+                title={isEdit ? 'Chỉnh sửa tên thành phố' : 'Thêm mới thành phố'}
+                onClose={() => setOpenModal(false)}
+                maxWidth='sm'
+            >
+                <CardCityForm
+                    control={control}
+                    errors={errors}
+                    handleSubmit={handleSubmit}
+                    onSubmit={onSubmit}
+                    reset={reset}
+                    setValue={setValue}
+                    loading={loading}
+                    isEdit={isEdit}
+                />
+            </CustomModal>
+
+            <ConfirmDeleteModal
+                open={openDeleteModal}
+                content={`Bạn có chắc chắn muốn xóa thành phố "${cityToDelete?.name}" này không?`}
+                onClose={() => setOpenDeleteModal(false)}
+                onConfirm={handleConfirmDelete}
+                loading={loading}
+            />
+
+            <ConfirmDeleteModal
+                open={openDeleteMultipleModal}
+                content={`Bạn có chắc chắn muốn xóa ${selectedRows.length} thành phố đã chọn không?`}
+                onClose={() => setOpenDeleteMultipleModal(false)}
+                onConfirm={handleConfirmDeleteMultiple}
+                loading={loading}
+            />
         </Box>
     )
 }
 
-export default CitySettingPage
+export default CityManagementPage

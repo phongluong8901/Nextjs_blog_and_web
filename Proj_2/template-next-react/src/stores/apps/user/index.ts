@@ -1,74 +1,95 @@
-// ** Redux Imports
-import { Dispatch } from 'redux'
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
+import { fetchUsersAsync, createUserAsync, updateUserAsync, deleteUserAsync, deleteManyUsersAsync } from './actions'
+import { TUserEntity } from 'src/types/user'
 
-// ** Axios Imports
-import axios from 'axios'
-
-interface DataParams {
-  q: string
-  role: string
-  status: string
-  currentPlan: string
+interface UserState {
+  users: TUserEntity[]
+  total: number
+  loading: boolean
+  error: string | null
 }
 
-interface Redux {
-  getState: any
-  dispatch: Dispatch<any>
+const initialState: UserState = {
+  users: [],
+  total: 0,
+  loading: false,
+  error: null
 }
 
-// ** Fetch Users
-export const fetchData = createAsyncThunk('appUsers/fetchData', async (params: DataParams) => {
-  const response = await axios.get('/apps/users/list', {
-    params
-  })
-
-  return response.data
-})
-
-// ** Add User
-export const addUser = createAsyncThunk(
-  'appUsers/addUser',
-  async (data: { [key: string]: number | string }, { getState, dispatch }: Redux) => {
-    const response = await axios.post('/apps/users/add-user', {
-      data
-    })
-    dispatch(fetchData(getState().user.params))
-
-    return response.data
-  }
-)
-
-// ** Delete User
-export const deleteUser = createAsyncThunk(
-  'appUsers/deleteUser',
-  async (id: number | string, { getState, dispatch }: Redux) => {
-    const response = await axios.delete('/apps/users/delete', {
-      data: id
-    })
-    dispatch(fetchData(getState().user.params))
-
-    return response.data
-  }
-)
-
-export const appUsersSlice = createSlice({
-  name: 'appUsers',
-  initialState: {
-    data: [],
-    total: 1,
-    params: {},
-    allData: []
-  },
+export const userSlice = createSlice({
+  name: 'user',
+  initialState,
   reducers: {},
   extraReducers: builder => {
-    builder.addCase(fetchData.fulfilled, (state, action) => {
-      state.data = action.payload.users
-      state.total = action.payload.total
-      state.params = action.payload.params
-      state.allData = action.payload.allData
-    })
+    builder
+
+      // Fetch
+      .addCase(fetchUsersAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchUsersAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.users = action.payload?.data?.users || []
+        state.total = action.payload?.data?.totalCount || 0
+      })
+      .addCase(fetchUsersAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // Create
+      .addCase(createUserAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(createUserAsync.fulfilled, state => {
+        state.loading = false
+      })
+      .addCase(createUserAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // Update
+      .addCase(updateUserAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateUserAsync.fulfilled, state => {
+        state.loading = false
+      })
+      .addCase(updateUserAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // Delete
+      .addCase(deleteUserAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteUserAsync.fulfilled, state => {
+        state.loading = false
+      })
+      .addCase(deleteUserAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+      // Delete Many
+      .addCase(deleteManyUsersAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteManyUsersAsync.fulfilled, state => {
+        state.loading = false
+      })
+      .addCase(deleteManyUsersAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload
+      })
   }
 })
 
-export default appUsersSlice.reducer
+export default userSlice.reducer

@@ -1,10 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 // ** Import các utilities từ Next.js
 import { NextPage } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
+
+// ** Import i18n Hook
+import { useTranslation } from 'react-i18next'
+
+// ** Import Toast library
+import toast from 'react-hot-toast'
 
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
@@ -28,19 +34,17 @@ import {
     styled,
     useTheme,
     CircularProgress,
-    Fade,
 } from '@mui/material'
 
 // ** Import Custom Component TextField
 import CustomTextField from 'src/components/text-field'
 
 // ** Import Service gọi API đổi mật khẩu
-
+import { resetPasswordAuth } from 'src/services/auth'
 
 // ** Import ảnh Light / Dark Mode
 import ResetDark from '/public/images/register-dark.png'
 import ResetLight from '/public/images/register-light.png'
-import { resetPasswordAuth } from 'src/services/auth'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -73,17 +77,17 @@ const schema = yup.object().shape({
 type TFormData = yup.InferType<typeof schema>
 
 const ResetPasswordPage: NextPage<TProps> = () => {
-    const [openAlert, setOpenAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState<boolean>(false)
 
     // States ẩn/hiện mật khẩu
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [showPassword, setShowPassword] = useState<boolean>(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false)
+
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
 
     const router = useRouter()
     const theme = useTheme()
+    const { t } = useTranslation()
 
     // Lấy secretKey từ query params của Next.js (VD: ?secretKey=l6mffaxp6vwopkok6q6e)
     const { secretKey } = router.query
@@ -101,11 +105,21 @@ const ResetPasswordPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
+    // Dọn dẹp timer khi unmount component
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [])
+
     const onSubmit = async (data: TFormData) => {
         if (!secretKey) {
-            setAlertSeverity('error')
-            setAlertMessage('Mã xác thực (secretKey) không hợp lệ hoặc đã hết hạn!')
-            setOpenAlert(true)
+            toast.error(
+                t(
+                    'Auth.ResetPassword.InvalidKey',
+                    'Mã xác thực (secretKey) không hợp lệ hoặc đã hết hạn!'
+                )
+            )
 
             return
         }
@@ -119,24 +133,24 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                 newPassword: data.newPassword,
             })
 
-            setAlertSeverity('success')
-            setAlertMessage(response?.message || 'Đặt lại mật khẩu thành công! Đang chuyển hướng về trang đăng nhập...')
-            setOpenAlert(true)
+            const successMessage =
+                response?.message ||
+                t(
+                    'Auth.ResetPassword.SuccessMessage',
+                    'Đặt lại mật khẩu thành công! Đang chuyển hướng về trang đăng nhập...'
+                )
+            toast.success(successMessage)
 
-            setTimeout(() => {
+            timerRef.current = setTimeout(() => {
                 router.push('/login')
             }, 3000)
-
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại!'
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                t('Auth.ResetPassword.ErrorMessage', 'Đặt lại mật khẩu thất bại. Vui lòng thử lại!')
 
-            setAlertSeverity('error')
-            setAlertMessage(errorMessage)
-            setOpenAlert(true)
-
-            setTimeout(() => {
-                setOpenAlert(false)
-            }, 4000)
+            toast.error(errorMessage)
         } finally {
             setLoading(false)
         }
@@ -158,47 +172,6 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                 position: 'relative',
             }}
         >
-            {/* Custom Toast Alert */}
-            <Fade in={openAlert}>
-                <Box
-                    sx={{
-                        position: 'fixed',
-                        top: 24,
-                        right: 24,
-                        zIndex: 9999,
-                        display: openAlert ? 'flex' : 'none',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        padding: '14px 20px',
-                        backgroundColor: alertSeverity === 'success' ? '#2e7d32' : '#d32f2f',
-                        color: '#fff',
-                        borderRadius: '10px',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        minWidth: '280px',
-                    }}
-                >
-                    <Icon
-                        icon={
-                            alertSeverity === 'success'
-                                ? 'mdi:check-circle-outline'
-                                : 'mdi:alert-circle-outline'
-                        }
-                        width={22}
-                        height={22}
-                    />
-                    <Box sx={{ flex: 1 }}>{alertMessage}</Box>
-                    <IconButton
-                        size="small"
-                        onClick={() => setOpenAlert(false)}
-                        sx={{ color: '#fff', padding: '2px' }}
-                    >
-                        <Icon icon="mdi:close" width={18} height={18} />
-                    </IconButton>
-                </Box>
-            </Fade>
-
             <MainStackedCard>
                 {/* Cột hình ảnh minh họa bên trái */}
                 <Box
@@ -250,14 +223,17 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                             variant="h4"
                             sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}
                         >
-                            Reset Password 🔒
+                            {t('Auth.ResetPassword.Title', 'Reset Password')} 🔒
                         </Typography>
                         <Typography
                             variant="body2"
                             color="text.secondary"
                             sx={{ mb: 3 }}
                         >
-                            Your new password must be different from previously used passwords
+                            {t(
+                                'Auth.ResetPassword.Subtitle',
+                                'Your new password must be different from previously used passwords'
+                            )}
                         </Typography>
 
                         <Box
@@ -273,7 +249,9 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                         >
                             {/* New Password */}
                             <FormControl fullWidth error={Boolean(errors.newPassword)}>
-                                <FormLabel htmlFor="newPassword">New Password</FormLabel>
+                                <FormLabel htmlFor="newPassword">
+                                    {t('Auth.ResetPassword.NewPassword', 'New Password')}
+                                </FormLabel>
                                 <Controller
                                     name="newPassword"
                                     control={control}
@@ -309,7 +287,9 @@ const ResetPasswordPage: NextPage<TProps> = () => {
 
                             {/* Confirm Password */}
                             <FormControl fullWidth error={Boolean(errors.confirmPassword)}>
-                                <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+                                <FormLabel htmlFor="confirmPassword">
+                                    {t('Auth.ResetPassword.ConfirmPassword', 'Confirm Password')}
+                                </FormLabel>
                                 <Controller
                                     name="confirmPassword"
                                     control={control}
@@ -349,10 +329,14 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                                 variant="contained"
                                 size="large"
                                 disabled={loading}
-                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                                startIcon={
+                                    loading ? <CircularProgress size={20} color="inherit" /> : null
+                                }
                                 sx={{ mt: 1 }}
                             >
-                                {loading ? 'Saving...' : 'Set new password'}
+                                {loading
+                                    ? t('Auth.ResetPassword.Saving', 'Saving...')
+                                    : t('Auth.ResetPassword.SubmitButton', 'Set new password')}
                             </Button>
                         </Box>
 
@@ -378,7 +362,7 @@ const ResetPasswordPage: NextPage<TProps> = () => {
                                 }}
                             >
                                 <Icon icon="mdi:chevron-left" width={20} height={20} />
-                                Back to login
+                                {t('Auth.ResetPassword.BackToLogin', 'Back to login')}
                             </MuiLink>
                         </Box>
                     </Box>

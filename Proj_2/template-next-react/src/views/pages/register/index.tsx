@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 // ** Import các utilities từ Next.js
 import { NextPage } from 'next'
@@ -6,9 +6,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 
+// ** Import i18n Hook
+import { useTranslation } from 'react-i18next'
+
+// ** Import Toast library
+import toast from 'react-hot-toast'
+
 // ** Import Redux Hooks & Actions
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from 'src/stores'
+import { registerUser } from 'src/stores/apps/auth/actions'
 
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
@@ -36,7 +43,6 @@ import {
     styled,
     useTheme,
     CircularProgress,
-    Fade,
 } from '@mui/material'
 
 // ** Import Custom Component TextField
@@ -45,7 +51,6 @@ import CustomTextField from 'src/components/text-field'
 // ** Import ảnh Light / Dark Mode cho Register
 import RegisterDark from '/public/images/register-dark.png'
 import RegisterLight from '/public/images/register-light.png'
-import { registerUser } from 'src/stores/apps/auth/actions'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -86,15 +91,14 @@ const schema = yup.object().shape({
 type TFormData = yup.InferType<typeof schema>
 
 const RegisterPage: NextPage<TProps> = () => {
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [showPassword, setShowPassword] = useState<boolean>(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false)
 
-    const [openAlert, setOpenAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
 
     const router = useRouter()
     const theme = useTheme()
+    const { t } = useTranslation()
     const dispatch = useDispatch<AppDispatch>()
 
     const { loading } = useSelector((state: RootState) => state.auth)
@@ -115,6 +119,13 @@ const RegisterPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
+    // Dọn dẹp timer khi unmount component để tránh memory leak
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [])
+
     const onSubmit = async (data: TFormData) => {
         const payload = {
             fullName: data.fullName,
@@ -125,31 +136,24 @@ const RegisterPage: NextPage<TProps> = () => {
         const resultAction = await dispatch(registerUser(payload))
 
         if (registerUser.fulfilled.match(resultAction)) {
-            setAlertSeverity('success')
-            setAlertMessage('Đăng ký tài khoản thành công! Đang chuyển hướng...')
-            setOpenAlert(true)
+            toast.success(t('Auth.Register.Success', 'Đăng ký tài khoản thành công! Đang chuyển hướng...'))
 
-            setTimeout(() => {
+            timerRef.current = setTimeout(() => {
                 router.push('/login')
             }, 1500)
         } else {
-            const errorMessage = (resultAction.payload as any)?.message || 'Đăng ký thất bại. Vui lòng thử lại!'
-            setAlertSeverity('error')
-            setAlertMessage(errorMessage)
-            setOpenAlert(true)
-
-            // Tự tắt sau 4 giây
-            setTimeout(() => {
-                setOpenAlert(false)
-            }, 4000)
+            const errorMessage =
+                (resultAction.payload as { message?: string })?.message ||
+                t('Auth.Register.Error', 'Đăng ký thất bại. Vui lòng thử lại!')
+            toast.error(errorMessage)
         }
     }
 
-    const handleGoogleRegister = () => {
+    const handleGoogleRegister = (): void => {
         console.log('Register with Google')
     }
 
-    const handleFacebookRegister = () => {
+    const handleFacebookRegister = (): void => {
         console.log('Register with Facebook')
     }
 
@@ -169,48 +173,8 @@ const RegisterPage: NextPage<TProps> = () => {
                 position: 'relative',
             }}
         >
-            {/* Custom Toast thay thế Snackbar/Alert để tránh hoàn toàn lỗi từ core theme */}
-            <Fade in={openAlert}>
-                <Box
-                    sx={{
-                        position: 'fixed',
-                        top: 24,
-                        right: 24,
-                        zIndex: 9999,
-                        display: openAlert ? 'flex' : 'none',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        padding: '14px 20px',
-                        backgroundColor: alertSeverity === 'success' ? '#2e7d32' : '#d32f2f',
-                        color: '#fff',
-                        borderRadius: '10px',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        minWidth: '280px',
-                    }}
-                >
-                    <Icon
-                        icon={
-                            alertSeverity === 'success'
-                                ? 'mdi:check-circle-outline'
-                                : 'mdi:alert-circle-outline'
-                        }
-                        width={22}
-                        height={22}
-                    />
-                    <Box sx={{ flex: 1 }}>{alertMessage}</Box>
-                    <IconButton
-                        size="small"
-                        onClick={() => setOpenAlert(false)}
-                        sx={{ color: '#fff', padding: '2px' }}
-                    >
-                        <Icon icon="mdi:close" width={18} height={18} />
-                    </IconButton>
-                </Box>
-            </Fade>
-
             <MainStackedCard>
+                {/* Cột trái: Hình minh họa */}
                 <Box
                     sx={{
                         flex: { xs: '0 0 0%', sm: '1 1 45%', md: '1 1 55%' },
@@ -241,6 +205,7 @@ const RegisterPage: NextPage<TProps> = () => {
                     </Box>
                 </Box>
 
+                {/* Cột phải: Form Đăng ký */}
                 <Box
                     sx={{
                         flex: { xs: '1 1 100%', sm: '1 1 55%', md: '1 1 45%' },
@@ -259,7 +224,7 @@ const RegisterPage: NextPage<TProps> = () => {
                             variant="h4"
                             sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}
                         >
-                            Sign up
+                            {t('Auth.Register.Title', 'Sign up')}
                         </Typography>
 
                         <Box
@@ -275,7 +240,7 @@ const RegisterPage: NextPage<TProps> = () => {
                             }}
                         >
                             <FormControl fullWidth error={Boolean(errors.fullName)}>
-                                <FormLabel htmlFor="fullName">Full Name</FormLabel>
+                                <FormLabel htmlFor="fullName">{t('Auth.Register.FullName', 'Full Name')}</FormLabel>
                                 <Controller
                                     name="fullName"
                                     control={control}
@@ -283,19 +248,18 @@ const RegisterPage: NextPage<TProps> = () => {
                                         <CustomTextField
                                             {...field}
                                             id="fullName"
-                                            placeholder="John Doe"
+                                            placeholder={t('Auth.Register.FullNamePlaceholder', 'John Doe')}
                                             autoFocus
                                             fullWidth
                                             error={Boolean(errors.fullName)}
                                             helperText={errors.fullName?.message}
-                                            color={errors.fullName ? 'error' : 'primary'}
                                         />
                                     )}
                                 />
                             </FormControl>
 
                             <FormControl fullWidth error={Boolean(errors.email)}>
-                                <FormLabel htmlFor="email">Email</FormLabel>
+                                <FormLabel htmlFor="email">{t('Auth.Register.Email', 'Email')}</FormLabel>
                                 <Controller
                                     name="email"
                                     control={control}
@@ -304,19 +268,18 @@ const RegisterPage: NextPage<TProps> = () => {
                                             {...field}
                                             id="email"
                                             type="email"
-                                            placeholder="your@email.com"
+                                            placeholder={t('Auth.Register.EmailPlaceholder', 'your@email.com')}
                                             autoComplete="email"
                                             fullWidth
                                             error={Boolean(errors.email)}
                                             helperText={errors.email?.message}
-                                            color={errors.email ? 'error' : 'primary'}
                                         />
                                     )}
                                 />
                             </FormControl>
 
                             <FormControl fullWidth error={Boolean(errors.password)}>
-                                <FormLabel htmlFor="password">Password</FormLabel>
+                                <FormLabel htmlFor="password">{t('Auth.Register.Password', 'Password')}</FormLabel>
                                 <Controller
                                     name="password"
                                     control={control}
@@ -330,7 +293,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                             fullWidth
                                             error={Boolean(errors.password)}
                                             helperText={errors.password?.message}
-                                            color={errors.password ? 'error' : 'primary'}
                                             InputProps={{
                                                 endAdornment: (
                                                     <InputAdornment position="end">
@@ -356,7 +318,7 @@ const RegisterPage: NextPage<TProps> = () => {
                             </FormControl>
 
                             <FormControl fullWidth error={Boolean(errors.confirmPassword)}>
-                                <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+                                <FormLabel htmlFor="confirmPassword">{t('Auth.Register.ConfirmPassword', 'Confirm Password')}</FormLabel>
                                 <Controller
                                     name="confirmPassword"
                                     control={control}
@@ -370,7 +332,6 @@ const RegisterPage: NextPage<TProps> = () => {
                                             fullWidth
                                             error={Boolean(errors.confirmPassword)}
                                             helperText={errors.confirmPassword?.message}
-                                            color={errors.confirmPassword ? 'error' : 'primary'}
                                             InputProps={{
                                                 endAdornment: (
                                                     <InputAdornment position="end">
@@ -411,13 +372,13 @@ const RegisterPage: NextPage<TProps> = () => {
                                             }
                                             label={
                                                 <Typography variant="body2">
-                                                    I agree to{' '}
+                                                    {t('Auth.Register.AgreeTo', 'I agree to')}{' '}
                                                     <MuiLink
                                                         href="#"
                                                         onClick={(e) => e.preventDefault()}
                                                         underline="hover"
                                                     >
-                                                        privacy policy & terms
+                                                        {t('Auth.Register.PrivacyPolicy', 'privacy policy & terms')}
                                                     </MuiLink>
                                                 </Typography>
                                             }
@@ -439,11 +400,11 @@ const RegisterPage: NextPage<TProps> = () => {
                                 disabled={loading}
                                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                             >
-                                {loading ? 'Signing up...' : 'Sign up'}
+                                {loading ? t('Auth.Register.SigningUp', 'Signing up...') : t('Auth.Register.SignUpButton', 'Sign up')}
                             </Button>
                         </Box>
 
-                        <Divider sx={{ my: 2.5 }}>or sign up with</Divider>
+                        <Divider sx={{ my: 2.5 }}>{t('Auth.Register.OrSignWith', 'or sign up with')}</Divider>
 
                         <Box
                             sx={{
@@ -494,7 +455,7 @@ const RegisterPage: NextPage<TProps> = () => {
                             }}
                         >
                             <Typography variant="body2" color="text.secondary">
-                                Already have an account?
+                                {t('Auth.Register.AlreadyHaveAccount', 'Already have an account?')}
                             </Typography>
                             <MuiLink
                                 component={Link}
@@ -502,7 +463,7 @@ const RegisterPage: NextPage<TProps> = () => {
                                 variant="body2"
                                 sx={{ fontWeight: 600 }}
                             >
-                                Sign in
+                                {t('Auth.Register.SignIn', 'Sign in')}
                             </MuiLink>
                         </Box>
                     </Box>

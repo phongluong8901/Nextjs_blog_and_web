@@ -161,14 +161,13 @@ const updateAuthMe = (id, data, file, isPermission) => {
       });
 
       if (!checkUser) {
-        resolve({
+        return resolve({
           status: CONFIG_MESSAGE_ERRORS.INVALID.status,
           message: "The user is not existed",
           typeError: CONFIG_MESSAGE_ERRORS.INVALID.type,
           data: null,
           statusMessage: "Error",
         });
-        return;
       }
 
       if (data.email && data.email !== checkUser.email) {
@@ -178,14 +177,13 @@ const updateAuthMe = (id, data, file, isPermission) => {
         });
 
         if (existedName !== null) {
-          resolve({
+          return resolve({
             status: CONFIG_MESSAGE_ERRORS.ALREADY_EXIST.status,
             message: "The email of user is existed",
             typeError: CONFIG_MESSAGE_ERRORS.ALREADY_EXIST.type,
             data: null,
             statusMessage: "Error",
           });
-          return;
         }
       }
 
@@ -193,14 +191,13 @@ const updateAuthMe = (id, data, file, isPermission) => {
         isAdminPermission(checkUser.permissions) &&
         (data.status !== checkUser.status || data.email !== checkUser.email)
       ) {
-        resolve({
+        return resolve({
           status: CONFIG_MESSAGE_ERRORS.UNAUTHORIZED.status,
           message: "You can't change admin's email or status",
           typeError: CONFIG_MESSAGE_ERRORS.UNAUTHORIZED.type,
           data: null,
           statusMessage: "Error",
         });
-        return;
       }
 
       if (data.addresses) {
@@ -208,14 +205,13 @@ const updateAuthMe = (id, data, file, isPermission) => {
           (address) => address.isDefault
         );
         if (defaultAddresses.length > 1) {
-          resolve({
+          return resolve({
             status: CONFIG_MESSAGE_ERRORS.INVALID.status,
             message: "Only one default address is allowed",
             typeError: CONFIG_MESSAGE_ERRORS.INVALID.type,
             data: null,
             statusMessage: "Error",
           });
-          return;
         }
       }
 
@@ -226,7 +222,7 @@ const updateAuthMe = (id, data, file, isPermission) => {
         checkUser.avatar = data.avatar;
       }
 
-      // Cập nhật các trường thông tin (Dùng điều kiện để không bị mất dữ liệu cũ & bỏ gán rỗng phoneNumber)
+      // Cập nhật các trường thông tin cơ bản
       if (data.firstName !== undefined) checkUser.firstName = data.firstName;
       if (data.lastName !== undefined) checkUser.lastName = data.lastName;
       if (data.middleName !== undefined) checkUser.middleName = data.middleName;
@@ -238,10 +234,16 @@ const updateAuthMe = (id, data, file, isPermission) => {
       if (data.role) checkUser.role = data.role;
       if (data.addresses) checkUser.addresses = data.addresses;
 
+      // Xử lý ép kiểu và gán status trực tiếp tại Service để đảm bảo nhận dạng chuẩn số (0 hoặc 1)
+      if (data.status !== undefined) {
+        checkUser.status = 
+          data.status === 1 || data.status === '1' || data.status === true || data.status === 'true' ? 1 : 0;
+      }
+
       await checkUser.save();
       await checkUser.populate('role'); // Populate luôn role để trả về frontend hiển thị tên role chuẩn
 
-      resolve({
+      return resolve({
         status: CONFIG_MESSAGE_ERRORS.ACTION_SUCCESS.status,
         message: "Updated user success",
         typeError: "",
@@ -249,9 +251,33 @@ const updateAuthMe = (id, data, file, isPermission) => {
         statusMessage: "Success",
       });
     } catch (e) {
-      reject(e);
+      return reject(e);
     }
   });
+};
+
+const changePasswordService = async (userId, currentPassword, newPassword) => {
+    // 1. Tìm user theo ID (đã được middleware AuthPermission gán vào req.user hoặc req.userId)
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error('Người dùng không tồn tại');
+    }
+
+    // 2. Kiểm tra mật khẩu hiện tại có chính xác không
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+        throw new Error('Mật khẩu hiện tại không chính xác');
+    }
+
+    // 3. Hash mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 4. Cập nhật mật khẩu mới vào database
+    user.password = hashedPassword;
+    await user.save();
+
+    return { message: 'Đổi mật khẩu thành công' };
 };
 
 const updateDeviceToken = (id, data, isPermission) => {
@@ -757,4 +783,5 @@ module.exports = {
   loginGoogle,
   registerUser,
   updateDeviceToken,
+  changePasswordService,
 };

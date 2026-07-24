@@ -34,6 +34,9 @@ yarn initDB
 - start
 yarn start
 
+- xoa cache .next
+Remove-Item -Recurse -Force .next
+
 
 --- api swagger
 http://localhost:3001/swagger/

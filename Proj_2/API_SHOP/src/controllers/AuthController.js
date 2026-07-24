@@ -206,12 +206,20 @@ const updateAuthMe = async (req, res) => {
     const isPermission = req.isPermission;
     const file = req.file;
 
+    // Ép kiểu status từ FormData (chuỗi/boolean) về dạng số (1 hoặc 0)
+    const updatedBody = { ...req.body };
+    if (updatedBody.status !== undefined) {
+      updatedBody.status = 
+        updatedBody.status === 1 || updatedBody.status === '1' || updatedBody.status === true || updatedBody.status === 'true' ? 1 : 0;
+    }
+
     const response = await AuthService.updateAuthMe(
       userId,
-      req.body,
+      updatedBody, // Dùng body đã được ép kiểu chuẩn status
       file,
       isPermission
     );
+    
     const { data, status, typeError, message, statusMessage } = response;
     return res.status(status).json({
       typeError,

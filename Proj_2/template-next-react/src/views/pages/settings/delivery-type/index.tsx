@@ -1,42 +1,158 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { NextPage } from 'next'
 import { useTranslation } from 'react-i18next'
-import { Box, Card, Grid, Button, Divider, FormControl, FormLabel, Typography, useTheme } from '@mui/material'
-import { useForm, Controller } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
+import { Box, Grid, Typography, useTheme } from '@mui/material'
 import * as yup from 'yup'
-import CustomTextField from 'src/components/text-field'
 import toast from 'react-hot-toast'
+
+// ** Redux Hooks & Actions
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState, AppDispatch } from 'src/stores'
+import {
+    fetchDeliveryTypesAsync,
+    createDeliveryTypeAsync,
+    updateDeliveryTypeAsync,
+    deleteDeliveryTypeAsync,
+    deleteManyDeliveryTypesAsync
+} from 'src/stores/apps/delivery-type/actions'
+import CustomConfirmDialog from 'src/components/custom-confirm-dialog'
+import { TDeliveryType } from 'src/types/delivery-type'
+import { DeliveryConfigItem } from 'src/configs/delivery'
+import { DeliveryTypeForm } from './component/DeliveryTypeForm'
+import { DeliveryTypeQuickSelect } from './component/DeliveryTypeQuickSelect'
+import { DeliveryTypeList } from './component/DeliveryTypeList'
 
 const DeliveryTypeSettingPage: NextPage = () => {
     const theme = useTheme()
     const { t, i18n } = useTranslation()
-    const [loading, setLoading] = useState<boolean>(false)
+    const dispatch = useDispatch<AppDispatch>()
 
+    // ** Redux State
+    const { deliveryTypes, total, loading } = useSelector((state: RootState) => state.deliveryType)
+
+    // ** Local States
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
+    const [searchVal, setSearchVal] = useState('')
+    const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [selectedItem, setSelectedItem] = useState<TDeliveryType | null>(null)
+    const [isEdit, setIsEdit] = useState<boolean>(false)
+    const [selectedRows, setSelectedRows] = useState<string[]>([])
+
+    // ** Dialog States
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+    const [openDeleteManyDialog, setOpenDeleteManyDialog] = useState(false)
+    const [openConfirmDialog, setOpenConfirmDialog] = useState(false)
+    const [selectedQuickItem, setSelectedQuickItem] = useState<DeliveryConfigItem | null>(null)
+
+    // ** Yup Schema Validation
     const schema = useMemo(() => {
         return yup.object().shape({
             name: yup.string().required(t('validation.nameRequired', 'Please enter delivery type name.')),
-            fee: yup.number().typeError('Must be a number').required('Please enter delivery fee'),
+            price: yup.number().typeError('Must be a number').required('Please enter delivery price'),
         })
     }, [t, i18n.language])
 
-    type TFormInputs = yup.InferType<typeof schema>
+    // ** Fetch Data
+    const fetchDeliveryTypes = useCallback(() => {
+        dispatch(
+            fetchDeliveryTypesAsync({
+                page: paginationModel.page + 1,
+                limit: paginationModel.pageSize,
+                search: searchVal
+            })
+        )
+    }, [dispatch, paginationModel, searchVal])
 
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<TFormInputs>({
-        defaultValues: { name: '', fee: 0 },
-        resolver: yupResolver(schema),
-    })
+    // ** Reset page về 0 mỗi khi từ khóa tìm kiếm thay đổi
+    useEffect(() => {
+        setPaginationModel(prev => ({ ...prev, page: 0 }))
+    }, [searchVal])
 
-    const onSubmit = async (data: TFormInputs) => {
-        try {
-            setLoading(true)
-            console.log('Delivery Type Data:', data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            toast.success(t('common.updateSuccess', 'Operation completed successfully!'))
-        } catch (error: any) {
-            toast.error(t('common.updateFailed', 'Operation failed.'))
-        } finally {
-            setLoading(false)
+    useEffect(() => {
+        fetchDeliveryTypes()
+    }, [fetchDeliveryTypes])
+
+    // ** Submit Handler (Create or Update)
+    const onSubmitForm = async (data: { name: string; price: number }) => {
+        if (isEdit && selectedId) {
+            const res = await dispatch(updateDeliveryTypeAsync({ id: selectedId, data }))
+            if (updateDeliveryTypeAsync.fulfilled.match(res)) {
+                toast.success('Updated delivery type successfully!')
+                handleResetForm()
+                fetchDeliveryTypes()
+            } else {
+                toast.error((res.payload as any)?.message || 'Update failed.')
+            }
+        } else {
+            const res = await dispatch(createDeliveryTypeAsync(data))
+            if (createDeliveryTypeAsync.fulfilled.match(res)) {
+                toast.success('Created delivery type successfully!')
+                handleResetForm()
+                fetchDeliveryTypes()
+            } else {
+                toast.error((res.payload as any)?.message || 'Creation failed.')
+            }
+        }
+    }
+
+    const handleResetForm = () => {
+        setIsEdit(false)
+        setSelectedId(null)
+        setSelectedItem(null)
+    }
+
+    // ** Quick Select Handlers
+    const handleSelectQuickItem = (item: DeliveryConfigItem) => {
+        setSelectedQuickItem(item)
+        setOpenConfirmDialog(true)
+    }
+
+    const handleConfirmQuickSelect = () => {
+        if (selectedQuickItem) {
+            setSelectedItem({
+                _id: '',
+                name: selectedQuickItem.name,
+                price: selectedQuickItem.price
+            })
+            setIsEdit(true)
+        }
+        setOpenConfirmDialog(false)
+    }
+
+    // ** Edit / Delete Handlers
+    const handleEditClick = (item: TDeliveryType) => {
+        setIsEdit(true)
+        setSelectedId(item._id)
+        setSelectedItem(item)
+    }
+
+    const handleDeleteSingleClick = (id: string) => {
+        setSelectedId(id)
+        setOpenDeleteDialog(true)
+    }
+
+    const handleDeleteSingle = async () => {
+        if (!selectedId) return
+        const res = await dispatch(deleteDeliveryTypeAsync(selectedId))
+        if (deleteDeliveryTypeAsync.fulfilled.match(res)) {
+            toast.success('Deleted delivery type successfully!')
+            setOpenDeleteDialog(false)
+            setSelectedId(null)
+            fetchDeliveryTypes()
+        } else {
+            toast.error('Delete failed.')
+        }
+    }
+
+    const handleDeleteMany = async () => {
+        const res = await dispatch(deleteManyDeliveryTypesAsync({ ids: selectedRows }))
+        if (deleteManyDeliveryTypesAsync.fulfilled.match(res)) {
+            toast.success('Deleted selected delivery types successfully!')
+            setOpenDeleteManyDialog(false)
+            setSelectedRows([])
+            fetchDeliveryTypes()
+        } else {
+            toast.error('Delete many failed.')
         }
     }
 
@@ -45,34 +161,80 @@ const DeliveryTypeSettingPage: NextPage = () => {
             <Typography variant="h4" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
                 {t('delivery.title', 'Delivery Type Settings')}
             </Typography>
+
             <Grid container spacing={3}>
+                {/* Form & Quick Select Section */}
+                <Grid item xs={12} md={4}>
+                    <DeliveryTypeForm
+                        isEdit={isEdit}
+                        selectedItem={selectedItem}
+                        loading={loading}
+                        onSubmitForm={onSubmitForm}
+                        onResetForm={handleResetForm}
+                        schema={schema}
+                    />
+                    {!isEdit && (
+                        <DeliveryTypeQuickSelect onSelectQuickItem={handleSelectQuickItem} />
+                    )}
+                </Grid>
+
+                {/* Table List Section */}
                 <Grid item xs={12} md={8}>
-                    <Card sx={{ p: 4, backgroundColor: theme.palette.background.paper }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary }}>
-                            {t('delivery.details', 'Delivery Details')}
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            <FormControl fullWidth error={Boolean(errors.name)}>
-                                <FormLabel>{t('common.name', 'Name')}</FormLabel>
-                                <Controller name="name" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} placeholder="Enter delivery type..." fullWidth error={Boolean(errors.name)} helperText={errors.name?.message} />
-                                )} />
-                            </FormControl>
-                            <FormControl fullWidth error={Boolean(errors.fee)}>
-                                <FormLabel>{t('delivery.fee', 'Fee')}</FormLabel>
-                                <Controller name="fee" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} type="number" placeholder="Enter fee..." fullWidth error={Boolean(errors.fee)} helperText={errors.fee?.message} />
-                                )} />
-                            </FormControl>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                                <Button type="submit" variant="contained" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-                                <Button type="button" variant="outlined" color="secondary" onClick={() => reset()}>Reset</Button>
-                            </Box>
-                        </Box>
-                    </Card>
+                    <DeliveryTypeList
+                        deliveryTypes={deliveryTypes}
+                        total={total}
+                        loading={loading}
+                        searchVal={searchVal}
+                        setSearchVal={setSearchVal}
+                        paginationModel={paginationModel}
+                        setPaginationModel={setPaginationModel}
+                        selectedRows={selectedRows}
+                        setSelectedRows={setSelectedRows}
+                        onEditClick={handleEditClick}
+                        onDeleteClick={handleDeleteSingleClick}
+                        onDeleteManyClick={() => setOpenDeleteManyDialog(true)}
+                    />
                 </Grid>
             </Grid>
+
+            {/* Confirm Dialog Quick Select */}
+            <CustomConfirmDialog
+                open={openConfirmDialog}
+                title='Xác nhận điền mẫu'
+                content={`Bạn có muốn điền mẫu "${selectedQuickItem?.name}" với giá ${selectedQuickItem?.price.toLocaleString()} đ vào form không?`}
+                confirmText='Xác nhận'
+                confirmColor='primary'
+                icon='mdi:check-circle-outline'
+                loading={false}
+                onClose={() => setOpenConfirmDialog(false)}
+                onConfirm={handleConfirmQuickSelect}
+            />
+
+            {/* Confirm Dialog Delete Single */}
+            <CustomConfirmDialog
+                open={openDeleteDialog}
+                title='Confirm Delete'
+                content='Are you sure you want to delete this delivery type?'
+                confirmText='Delete'
+                confirmColor='error'
+                icon='mdi:alert-circle-outline'
+                loading={loading}
+                onClose={() => setOpenDeleteDialog(false)}
+                onConfirm={handleDeleteSingle}
+            />
+
+            {/* Confirm Dialog Delete Many */}
+            <CustomConfirmDialog
+                open={openDeleteManyDialog}
+                title='Confirm Delete Many'
+                content={`Are you sure you want to delete ${selectedRows.length} selected delivery types?`}
+                confirmText='Delete'
+                confirmColor='error'
+                icon='mdi:alert-circle-outline'
+                loading={loading}
+                onClose={() => setOpenDeleteManyDialog(false)}
+                onConfirm={handleDeleteMany}
+            />
         </Box>
     )
 }

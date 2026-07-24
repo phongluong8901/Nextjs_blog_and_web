@@ -1,42 +1,140 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { NextPage } from 'next'
 import { useTranslation } from 'react-i18next'
-import { Box, Card, Grid, Button, Divider, FormControl, FormLabel, Typography, useTheme } from '@mui/material'
-import { useForm, Controller } from 'react-hook-form'
+import { Box, Grid, Typography, useTheme } from '@mui/material'
+import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import CustomTextField from 'src/components/text-field'
 import toast from 'react-hot-toast'
+
+// ** Redux
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from 'src/stores'
+import { createPaymentTypeAsync, deleteManyPaymentTypesAsync, deletePaymentTypeAsync, fetchPaymentTypesAsync, updatePaymentTypeAsync } from 'src/stores/apps/payment-type/actions'
+
+import { TPaymentType } from 'src/types/payment-type'
+import { PAYMENT_TYPE_OPTIONS } from 'src/configs/payment'
+
+// ** Components
+import CustomConfirmDialog from 'src/components/custom-confirm-dialog'
+import PaymentTypeForm from './component/PaymentTypeForm'
+import PaymentTypeTemplates from './component/PaymentTypeTemplates'
+import PaymentTypeListTable from './component/PaymentTypeListTable'
+
 
 const PaymentTypeSettingPage: NextPage = () => {
     const theme = useTheme()
     const { t, i18n } = useTranslation()
-    const [loading, setLoading] = useState<boolean>(false)
+    const dispatch = useDispatch<AppDispatch>()
+
+    const { paymentTypes, total, loading } = useSelector((state: RootState) => state.paymenType)
+
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 })
+    const [searchVal, setSearchVal] = useState('')
+    const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [selectedItem, setSelectedItem] = useState<TPaymentType | null>(null)
+    const [isEdit, setIsEdit] = useState<boolean>(false)
+    const [selectedRows, setSelectedRows] = useState<string[]>([])
+
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+    const [openDeleteManyDialog, setOpenDeleteManyDialog] = useState(false)
 
     const schema = useMemo(() => {
         return yup.object().shape({
             name: yup.string().required(t('validation.nameRequired', 'Please enter payment type name.')),
-            code: yup.string().required(t('validation.codeRequired', 'Please enter code.')),
+            type: yup.string().required(t('validation.typeRequired', 'Please select payment type.')),
         })
     }, [t, i18n.language])
 
     type TFormInputs = yup.InferType<typeof schema>
 
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<TFormInputs>({
-        defaultValues: { name: '', code: '' },
+    const methods = useForm<TFormInputs>({
+        defaultValues: { name: '', type: '' },
         resolver: yupResolver(schema),
     })
 
+    const { setValue, reset } = methods
+
+    const fetchPaymentTypes = useCallback(() => {
+        dispatch(
+            fetchPaymentTypesAsync({
+                page: paginationModel.page + 1,
+                limit: paginationModel.pageSize,
+                search: searchVal
+            })
+        )
+    }, [dispatch, paginationModel, searchVal])
+
+    useEffect(() => {
+        setPaginationModel(prev => ({ ...prev, page: 0 }))
+    }, [searchVal])
+
+    useEffect(() => {
+        fetchPaymentTypes()
+    }, [fetchPaymentTypes])
+
+    const handleResetForm = () => {
+        setIsEdit(false)
+        setSelectedId(null)
+        setSelectedItem(null)
+        reset({ name: '', type: '' })
+    }
+
+    const handleSelectTemplate = (item: typeof PAYMENT_TYPE_OPTIONS[number]) => {
+        setValue('type', item.value)
+        setValue('name', t(item.labelKey, item.defaultLabel))
+    }
+
     const onSubmit = async (data: TFormInputs) => {
-        try {
-            setLoading(true)
-            console.log('Payment Type Data:', data)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            toast.success(t('common.updateSuccess', 'Operation completed successfully!'))
-        } catch (error: any) {
-            toast.error(t('common.updateFailed', 'Operation failed.'))
-        } finally {
-            setLoading(false)
+        if (isEdit && selectedId) {
+            const res = await dispatch(updatePaymentTypeAsync({ id: selectedId, data }))
+            if (updatePaymentTypeAsync.fulfilled.match(res)) {
+                toast.success(t('payment.updateSuccess', 'Updated payment type successfully!'))
+                handleResetForm()
+                fetchPaymentTypes()
+            } else {
+                toast.error((res.payload as any)?.message || t('common.updateFailed', 'Operation failed.'))
+            }
+        } else {
+            const res = await dispatch(createPaymentTypeAsync(data))
+            if (createPaymentTypeAsync.fulfilled.match(res)) {
+                toast.success(t('payment.createSuccess', 'Created payment type successfully!'))
+                handleResetForm()
+                fetchPaymentTypes()
+            } else {
+                toast.error((res.payload as any)?.message || t('common.updateFailed', 'Operation failed.'))
+            }
+        }
+    }
+
+    const handleEditClick = (item: TPaymentType) => {
+        setIsEdit(true)
+        setSelectedId(item._id)
+        setSelectedItem(item)
+    }
+
+    const handleDeleteSingle = async () => {
+        if (!selectedId) return
+        const res = await dispatch(deletePaymentTypeAsync(selectedId))
+        if (deletePaymentTypeAsync.fulfilled.match(res)) {
+            toast.success(t('payment.deleteSuccess', 'Deleted payment type successfully!'))
+            setOpenDeleteDialog(false)
+            setSelectedId(null)
+            fetchPaymentTypes()
+        } else {
+            toast.error((res.payload as any)?.message || 'Delete failed.')
+        }
+    }
+
+    const handleDeleteMany = async () => {
+        const res = await dispatch(deleteManyPaymentTypesAsync({ ids: selectedRows }))
+        if (deleteManyPaymentTypesAsync.fulfilled.match(res)) {
+            toast.success(t('payment.deleteManySuccess', 'Deleted selected payment types successfully!'))
+            setOpenDeleteManyDialog(false)
+            setSelectedRows([])
+            fetchPaymentTypes()
+        } else {
+            toast.error((res.payload as any)?.message || 'Delete many failed.')
         }
     }
 
@@ -45,34 +143,68 @@ const PaymentTypeSettingPage: NextPage = () => {
             <Typography variant="h4" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
                 {t('payment.title', 'Payment Type Settings')}
             </Typography>
+
             <Grid container spacing={3}>
+                {/* Form & Templates Section */}
+                <Grid item xs={12} md={4}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <PaymentTypeForm
+                            methods={methods}
+                            isEdit={isEdit}
+                            loading={loading}
+                            selectedItem={selectedItem}
+                            onSubmit={onSubmit}
+                            onReset={handleResetForm}
+                        />
+
+                        {!isEdit && (
+                            <PaymentTypeTemplates onSelectTemplate={handleSelectTemplate} />
+                        )}
+                    </Box>
+                </Grid>
+
+                {/* Table List Section */}
                 <Grid item xs={12} md={8}>
-                    <Card sx={{ p: 4, backgroundColor: theme.palette.background.paper }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary }}>
-                            {t('payment.details', 'Payment Details')}
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            <FormControl fullWidth error={Boolean(errors.name)}>
-                                <FormLabel>{t('common.name', 'Name')}</FormLabel>
-                                <Controller name="name" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} placeholder="Enter payment name..." fullWidth error={Boolean(errors.name)} helperText={errors.name?.message} />
-                                )} />
-                            </FormControl>
-                            <FormControl fullWidth error={Boolean(errors.code)}>
-                                <FormLabel>{t('common.code', 'Code')}</FormLabel>
-                                <Controller name="code" control={control} render={({ field }) => (
-                                    <CustomTextField {...field} placeholder="Enter payment code..." fullWidth error={Boolean(errors.code)} helperText={errors.code?.message} />
-                                )} />
-                            </FormControl>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                                <Button type="submit" variant="contained" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-                                <Button type="button" variant="outlined" color="secondary" onClick={() => reset()}>Reset</Button>
-                            </Box>
-                        </Box>
-                    </Card>
+                    <PaymentTypeListTable
+                        paymentTypes={paymentTypes}
+                        total={total}
+                        loading={loading}
+                        searchVal={searchVal}
+                        paginationModel={paginationModel}
+                        selectedRows={selectedRows}
+                        setSearchVal={setSearchVal}
+                        setPaginationModel={setPaginationModel}
+                        setSelectedRows={setSelectedRows}
+                        onEdit={handleEditClick}
+                        onDeleteSingle={(id) => { setSelectedId(id); setOpenDeleteDialog(true) }}
+                        onDeleteMany={() => setOpenDeleteManyDialog(true)}
+                    />
                 </Grid>
             </Grid>
+
+            <CustomConfirmDialog
+                open={openDeleteDialog}
+                title={t('common.confirmDelete', 'Confirm Delete')}
+                content={t('payment.confirmDeleteContent', 'Are you sure you want to delete this payment type?')}
+                confirmText={t('common.delete', 'Delete')}
+                confirmColor='error'
+                icon='mdi:alert-circle-outline'
+                loading={loading}
+                onClose={() => setOpenDeleteDialog(false)}
+                onConfirm={handleDeleteSingle}
+            />
+
+            <CustomConfirmDialog
+                open={openDeleteManyDialog}
+                title={t('common.confirmDeleteMany', 'Confirm Delete Many')}
+                content={t('payment.confirmDeleteManyContent', `Are you sure you want to delete ${selectedRows.length} selected payment types?`)}
+                confirmText={t('common.delete', 'Delete')}
+                confirmColor='error'
+                icon='mdi:alert-circle-outline'
+                loading={loading}
+                onClose={() => setOpenDeleteManyDialog(false)}
+                onConfirm={handleDeleteMany}
+            />
         </Box>
     )
 }

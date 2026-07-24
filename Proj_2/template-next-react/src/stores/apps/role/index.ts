@@ -1,16 +1,18 @@
-// ** Redux Imports
-import { createSlice } from '@reduxjs/toolkit'
-import { fetchRolesAsync, createRoleAsync, updateRoleAsync, deleteRoleAsync } from './actions'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { fetchRolesAsync, createRoleAsync, updateRoleAsync, deleteRoleAsync, deleteManyRolesAsync } from './actions'
+import { TRoleEntity } from 'src/types/role'
 
 interface RoleState {
-  roles: any[]
-  selectedRole: null | { [key: string]: any }
+  roles: TRoleEntity[]
+  total: number
+  selectedRole: TRoleEntity | null
   loading: boolean
   error: string | null
 }
 
 const initialState: RoleState = {
   roles: [],
+  total: 0,
   selectedRole: null,
   loading: false,
   error: null
@@ -23,7 +25,7 @@ export const roleSlice = createSlice({
     clearRoleError: state => {
       state.error = null
     },
-    setSelectedRole: (state, action) => {
+    setSelectedRole: (state, action: PayloadAction<TRoleEntity | null>) => {
       state.selectedRole = action.payload
     }
   },
@@ -37,9 +39,8 @@ export const roleSlice = createSlice({
       .addCase(fetchRolesAsync.fulfilled, (state, action) => {
         state.loading = false
         const resData = action.payload
-
-        // Hứng chuẩn dữ liệu trả về từ API backend của bạn
-        state.roles = resData.data || resData.roles || resData || []
+        state.roles = resData?.data?.roles || []
+        state.total = resData?.data?.totalCount || 0
       })
       .addCase(fetchRolesAsync.rejected, (state, action: any) => {
         state.loading = false
@@ -54,11 +55,10 @@ export const roleSlice = createSlice({
       })
       .addCase(createRoleAsync.fulfilled, (state, action: any) => {
         state.loading = false
-
-        // 💡 Đẩy thẳng role vừa tạo vào mảng state.roles để UI tự cập nhật ngay lập tức
-        const newRole = action.payload.data || action.payload
+        const newRole = action.payload?.data || action.payload
         if (newRole) {
           state.roles.unshift(newRole)
+          state.total += 1
         }
       })
       .addCase(createRoleAsync.rejected, (state, action: any) => {
@@ -74,13 +74,9 @@ export const roleSlice = createSlice({
       })
       .addCase(updateRoleAsync.fulfilled, (state, action: any) => {
         state.loading = false
-
-        // 💡 Cập nhật lại item đã sửa trong mảng state.roles
-        const updatedRole = action.payload.data || action.payload
+        const updatedRole = action.payload?.data || action.payload
         if (updatedRole) {
-          state.roles = state.roles.map(role =>
-            role._id === updatedRole._id || role.id === updatedRole.id ? updatedRole : role
-          )
+          state.roles = state.roles.map(role => (role._id === updatedRole._id ? updatedRole : role))
         }
       })
       .addCase(updateRoleAsync.rejected, (state, action: any) => {
@@ -96,13 +92,29 @@ export const roleSlice = createSlice({
       })
       .addCase(deleteRoleAsync.fulfilled, (state, action) => {
         state.loading = false
-
-        // 💡 Dùng cả _id lẫn id để phòng hờ dữ liệu MongoDB hoặc SQL
-        state.roles = state.roles.filter(role => role._id !== action.payload && role.id !== action.payload)
+        state.roles = state.roles.filter(role => role._id !== action.payload)
+        state.total = Math.max(0, state.total - 1)
       })
       .addCase(deleteRoleAsync.rejected, (state, action: any) => {
         state.loading = false
         state.error = action.payload?.message || 'Xóa vai trò thất bại'
+      })
+
+    // --- Xóa nhiều Role ---
+    builder
+      .addCase(deleteManyRolesAsync.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteManyRolesAsync.fulfilled, (state, action) => {
+        state.loading = false
+        const deletedIds = action.payload.ids
+        state.roles = state.roles.filter(role => !deletedIds.includes(role._id))
+        state.total = Math.max(0, state.total - deletedIds.length)
+      })
+      .addCase(deleteManyRolesAsync.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Xóa nhiều vai trò thất bại'
       })
   }
 })

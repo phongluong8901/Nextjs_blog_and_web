@@ -1,10 +1,13 @@
 // ** React Imports
 import React from 'react'
 
+// ** i18n Hook
+import { useTranslation } from 'react-i18next'
+
 // ** MUI Imports
 import Box from '@mui/material/Box'
 import { DataGrid, DataGridProps, GridColDef } from '@mui/x-data-grid'
-import { styled } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
 
 export interface CustomDataGridProps extends DataGridProps {
     rows: any[]
@@ -35,6 +38,14 @@ const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
         borderTop: `1px solid ${theme.palette.divider}`,
         backgroundColor: theme.palette.background.paper,
     },
+
+    // Tùy chỉnh thêm màu sắc cho phần phân trang và chữ trong DataGrid theo Theme
+    '& .MuiTablePagination-root': {
+        color: theme.palette.text.secondary,
+    },
+    '& .MuiTablePagination-selectIcon': {
+        color: theme.palette.text.secondary,
+    },
 }))
 
 const CustomDataGrid = ({
@@ -44,15 +55,46 @@ const CustomDataGrid = ({
     pageSize = 10,
     rowsPerPageOptions = [10, 25, 50],
     height = 500,
-    showActionsColumn = true, // Sử dụng giá trị mặc định để tránh lỗi unused
+    showActionsColumn = true,
     ...props
 }: CustomDataGridProps) => {
-    // Hoặc bạn có thể dùng biến showActionsColumn tại đây nếu muốn lọc cột tự động, 
-    // hiện tại khai báo mặc định như trên sẽ hết cảnh báo.
     void showActionsColumn
+    const theme = useTheme()
+    const { t } = useTranslation()
+
+    // Tự động dịch các chuỗi localText mặc định của DataGrid sang i18n (ví dụ: phân trang, No rows, v.v.)
+    const localeText = {
+        noRowsLabel: t('DataGrid.NoRowsLabel', 'Không có dữ liệu'),
+        noResultsOverlayLabel: t('DataGrid.NoResultsOverlayLabel', 'Không tìm thấy kết quả phù hợp'),
+        errorOverlayDefaultLabel: t('DataGrid.ErrorOverlayDefaultLabel', 'Đã có lỗi xảy ra.'),
+
+        // Phân trang (Pagination)
+        footerRowSelected: (count: number) =>
+            t('DataGrid.FooterRowSelected', 'Đã chọn {{count}} hàng', { count }),
+        footerTotalRows: t('DataGrid.FooterTotalRows', 'Tổng số hàng:'),
+        footerPaginationRowsPerPage: t('DataGrid.FooterPaginationRowsPerPage', 'Số hàng mỗi trang:'),
+
+        // Filter & Toolbar (nếu có dùng)
+        toolbarDensity: t('DataGrid.ToolbarDensity', 'Mật độ hiển thị'),
+        toolbarDensityLabel: t('DataGrid.ToolbarDensityLabel', 'Mật độ hiển thị'),
+        toolbarDensityCompact: t('DataGrid.ToolbarDensityCompact', 'Thu gọn'),
+        toolbarDensityStandard: t('DataGrid.ToolbarDensityStandard', 'Tiêu chuẩn'),
+        toolbarDensityComfortable: t('DataGrid.ToolbarDensityComfortable', 'Thoải mái'),
+
+        ...props.localeText,
+    }
 
     return (
-        <Box sx={{ width: '100%', height: height }}>
+        <Box
+            sx={{
+                width: '100%',
+                height: height,
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 2,
+                overflow: 'hidden',
+                boxShadow: theme.shadows[1],
+            }}
+        >
             <StyledDataGrid
                 rows={rows}
                 columns={columns}
@@ -64,6 +106,7 @@ const CustomDataGrid = ({
                     },
                 }}
                 disableRowSelectionOnClick
+                localeText={localeText}
                 {...props}
             />
         </Box>

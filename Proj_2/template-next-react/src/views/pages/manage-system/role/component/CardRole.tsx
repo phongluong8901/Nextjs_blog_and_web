@@ -36,7 +36,7 @@ const CardRole: React.FC<CardRoleProps> = ({
     return (
         <Card sx={{ p: 4, backgroundColor: theme.palette.background.paper }}>
             <Typography variant='h6' sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary }}>
-                {isEdit ? t('role.editTitle', 'Chỉnh sửa thông tin vai trò') : t('role.details', 'Role Information')}
+                {isEdit ? t('role.editTitle', 'Chỉnh sửa thông tin vai trò') : t('role.details', 'Thông tin vai trò')}
             </Typography>
             <Divider sx={{ mb: 3 }} />
             <Box
@@ -45,52 +45,18 @@ const CardRole: React.FC<CardRoleProps> = ({
                 noValidate
                 sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
             >
-                <FormControl fullWidth error={Boolean(errors.code)}>
-                    <FormLabel>{t('common.code', 'Code')}</FormLabel>
-                    <Controller
-                        name='code'
-                        control={control}
-                        render={({ field }) => (
-                            <CustomTextField
-                                {...field}
-                                placeholder={t('role.placeholderCode', 'Enter role code...')}
-                                fullWidth
-                                error={Boolean(errors.code)}
-                                helperText={errors.code?.message as string}
-                            />
-                        )}
-                    />
-                </FormControl>
-
                 <FormControl fullWidth error={Boolean(errors.name)}>
-                    <FormLabel>{t('common.name', 'Name')}</FormLabel>
+                    <FormLabel>{t('common.name', 'Tên vai trò')}</FormLabel>
                     <Controller
                         name='name'
                         control={control}
                         render={({ field }) => (
                             <CustomTextField
                                 {...field}
-                                placeholder={t('role.placeholderName', 'Enter role name...')}
+                                placeholder={t('role.placeholderName', 'Nhập tên vai trò...')}
                                 fullWidth
                                 error={Boolean(errors.name)}
                                 helperText={errors.name?.message as string}
-                            />
-                        )}
-                    />
-                </FormControl>
-
-                <FormControl fullWidth>
-                    <FormLabel>{t('common.description', 'Description')}</FormLabel>
-                    <Controller
-                        name='description'
-                        control={control}
-                        render={({ field }) => (
-                            <CustomTextField
-                                {...field}
-                                placeholder={t('role.placeholderDesc', 'Enter description...')}
-                                fullWidth
-                                multiline
-                                rows={3}
                             />
                         )}
                     />
@@ -103,7 +69,7 @@ const CardRole: React.FC<CardRoleProps> = ({
                         disabled={loading}
                         sx={{ minWidth: 120 }}
                     >
-                        {loading ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
+                        {loading ? t('common.saving', 'Đang lưu...') : t('common.saveChanges', 'Lưu thay đổi')}
                     </Button>
                     <Button
                         type='button'
@@ -112,7 +78,7 @@ const CardRole: React.FC<CardRoleProps> = ({
                         onClick={() => reset()}
                         disabled={loading}
                     >
-                        {t('common.reset', 'Reset')}
+                        {t('common.reset', 'Làm mới')}
                     </Button>
                 </Box>
             </Box>

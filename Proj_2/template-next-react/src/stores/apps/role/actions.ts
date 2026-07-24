@@ -1,49 +1,40 @@
-// ** Redux Imports
 import { createAsyncThunk } from '@reduxjs/toolkit'
-
-// ** Instance Axios Imports
-import instanceAxios from 'src/helpers/axios'
-
-// ** Config API
-import { CONFIG_API } from 'src/configs/api'
-
-interface RoleParams {
-  name: string
-  code: string
-  description?: string
-  [key: string]: any
-}
+import { createRole, deleteRole, deleteManyRoles, getAllRoles, updateRole } from 'src/services/role'
+import { TCreateRoleParams, TUpdateRoleParams } from 'src/types/role'
 
 // ** Lấy danh sách Role (GET)
-export const fetchRolesAsync = createAsyncThunk('role/fetchRoles', async (_, { rejectWithValue }) => {
+export const fetchRolesAsync = createAsyncThunk('role/fetchRoles', async (params: any, { rejectWithValue }) => {
   try {
-    const response = await instanceAxios.get(CONFIG_API.ROLE.INDEX)
+    const data = await getAllRoles(params)
 
-    return response.data // Trả về danh sách roles từ server
+    return data
   } catch (error: any) {
     return rejectWithValue(error.response?.data || 'Không thể lấy danh sách vai trò')
   }
 })
 
 // ** Tạo mới Role (POST)
-export const createRoleAsync = createAsyncThunk('role/createRole', async (data: RoleParams, { rejectWithValue }) => {
-  try {
-    const response = await instanceAxios.post(CONFIG_API.ROLE.INDEX, data)
+export const createRoleAsync = createAsyncThunk(
+  'role/createRole',
+  async (data: TCreateRoleParams, { rejectWithValue }) => {
+    try {
+      const response = await createRole(data)
 
-    return response.data
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data || 'Thêm vai trò thất bại')
+      return response
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Thêm vai trò thất bại')
+    }
   }
-})
+)
 
 // ** Cập nhật Role (PUT)
 export const updateRoleAsync = createAsyncThunk(
   'role/updateRole',
-  async ({ id, data }: { id: string | number; data: RoleParams }, { rejectWithValue }) => {
+  async ({ id, data }: { id: string | number; data: TUpdateRoleParams }, { rejectWithValue }) => {
     try {
-      const response = await instanceAxios.put(CONFIG_API.ROLE.DETAIL(id), data)
+      const response = await updateRole(id, data)
 
-      return response.data
+      return response
     } catch (error: any) {
       return rejectWithValue(error.response?.data || 'Cập nhật vai trò thất bại')
     }
@@ -53,10 +44,24 @@ export const updateRoleAsync = createAsyncThunk(
 // ** Xóa 1 Role (DELETE)
 export const deleteRoleAsync = createAsyncThunk('role/deleteRole', async (id: string | number, { rejectWithValue }) => {
   try {
-    await instanceAxios.delete(CONFIG_API.ROLE.DETAIL(id))
+    await deleteRole(id)
 
-    return id // Trả về id để lọc bỏ trên state store
+    return id
   } catch (error: any) {
     return rejectWithValue(error.response?.data || 'Xóa vai trò thất bại')
   }
 })
+
+// ** Xóa nhiều Role (DELETE MANY)
+export const deleteManyRolesAsync = createAsyncThunk(
+  'role/deleteManyRoles',
+  async (data: { ids: (string | number)[] }, { rejectWithValue }) => {
+    try {
+      const response = await deleteManyRoles(data)
+
+      return { response, ids: data.ids }
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Xóa nhiều vai trò thất bại')
+    }
+  }
+)

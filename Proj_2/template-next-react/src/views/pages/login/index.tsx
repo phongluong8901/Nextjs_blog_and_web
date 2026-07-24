@@ -35,8 +35,6 @@ import {
     styled,
     useTheme,
     CircularProgress,
-    Snackbar,
-    Alert,
 } from '@mui/material'
 
 // ** Import Custom Component TextField do mình định nghĩa
@@ -48,6 +46,12 @@ import LoginLight from '/public/images/login-light.png'
 import CustomCarousel from 'src/components/component_path/ImageCarousel'
 import { useAuth } from 'src/hooks/useAuth'
 import { getAuthMeAsync } from 'src/stores/apps/auth/actions'
+
+// ** Import i18n hook
+import { useTranslation } from 'react-i18next'
+
+// ** Import Toast library (react-hot-toast)
+import toast from 'react-hot-toast'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -99,19 +103,14 @@ const schema = yup.object().shape({
 type TFormData = yup.InferType<typeof schema>
 
 const LoginPage: NextPage<TProps> = () => {
-    // const [open, setOpen] = useState(false)
-    const [showPassword, setShowPassword] = useState(false)
-    const [loading, setLoading] = useState(false)
-
-    const [openAlert, setOpenAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
+    const [showPassword, setShowPassword] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(false)
 
     const theme = useTheme()
+    const { t } = useTranslation()
     const dispatch = useDispatch<AppDispatch>()
     const { login } = useAuth()
 
-    // Lấy thông tin tài khoản vừa đăng ký từ Redux store
     const authState = useSelector((state: RootState) => state.auth)
 
     const {
@@ -129,28 +128,20 @@ const LoginPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
-    // Tự động điền email và password từ Redux store khi chuyển trang từ Register sang
+    // Tự động điền thông tin đăng ký và clear Redux state an toàn
     useEffect(() => {
-        if (authState.registeredEmail) {
-            setValue('email', authState.registeredEmail, { shouldValidate: true, shouldDirty: true })
-        }
-        if (authState.registeredPassword) {
-            setValue('password', authState.registeredPassword, { shouldValidate: true, shouldDirty: true })
-        }
-
-        // Xóa sạch sau khi đã điền xong để F5 lại trang không bị điền lại nữa
-        return () => {
+        if (authState.registeredEmail || authState.registeredPassword) {
             if (authState.registeredEmail) {
-                dispatch(clearRegisteredCredentials())
+                setValue('email', authState.registeredEmail, { shouldValidate: true, shouldDirty: true })
             }
+            if (authState.registeredPassword) {
+                setValue('password', authState.registeredPassword, { shouldValidate: true, shouldDirty: true })
+            }
+
+            // Clear ngay lập tức sau khi đã đổ dữ liệu vào form để tránh lặp lại
+            dispatch(clearRegisteredCredentials())
         }
     }, [authState.registeredEmail, authState.registeredPassword, setValue, dispatch])
-
-    // const handleClickOpen = () => setOpen(true)
-    const handleCloseAlert = (_event?: React.SyntheticEvent | Event, reason?: string) => {
-        if (reason === 'clickaway') return
-        setOpenAlert(false)
-    }
 
     const onSubmit = (data: TFormData) => {
         setLoading(true)
@@ -160,26 +151,24 @@ const LoginPage: NextPage<TProps> = () => {
                 password: data.password,
                 rememberMe: data.remember,
             },
-            async (err) => { // 👈 Biến callback này thành async
+            async (err) => {
                 if (err) {
                     setLoading(false)
-                    setAlertSeverity('error')
-                    setAlertMessage(err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
-                    setOpenAlert(true)
+                    toast.error(err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
                 } else {
-                    // 👇 Đăng nhập thành công, gọi ngay lệnh nạp dữ liệu user đầy đủ vào Redux store
                     await dispatch(getAuthMeAsync())
                     setLoading(false)
+                    toast.success('Đăng nhập thành công!')
                 }
             }
         )
     }
 
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = (): void => {
         console.log('Login with Google')
     }
 
-    const handleFacebookLogin = () => {
+    const handleFacebookLogin = (): void => {
         console.log('Login with Facebook')
     }
 
@@ -198,17 +187,6 @@ const LoginPage: NextPage<TProps> = () => {
                 overflow: 'hidden',
             }}
         >
-            <Snackbar
-                open={openAlert}
-                autoHideDuration={4000}
-                onClose={handleCloseAlert}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                <Alert onClose={handleCloseAlert} severity={alertSeverity} sx={{ width: '100%' }}>
-                    {alertMessage}
-                </Alert>
-            </Snackbar>
-
             <MainStackedCard>
                 <Box
                     sx={{
@@ -274,7 +252,7 @@ const LoginPage: NextPage<TProps> = () => {
                             variant="h4"
                             sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}
                         >
-                            Sign in
+                            {t('Sign in')}
                         </Typography>
 
                         <Box
@@ -290,7 +268,7 @@ const LoginPage: NextPage<TProps> = () => {
                             }}
                         >
                             <FormControl fullWidth error={Boolean(errors.email)}>
-                                <FormLabel htmlFor="email">Email</FormLabel>
+                                <FormLabel htmlFor="email">{t('Email')}</FormLabel>
                                 <Controller
                                     name="email"
                                     control={control}
@@ -311,7 +289,7 @@ const LoginPage: NextPage<TProps> = () => {
                             </FormControl>
 
                             <FormControl fullWidth error={Boolean(errors.password)}>
-                                <FormLabel htmlFor="password">Password</FormLabel>
+                                <FormLabel htmlFor="password">{t('Password')}</FormLabel>
                                 <Controller
                                     name="password"
                                     control={control}
@@ -362,7 +340,7 @@ const LoginPage: NextPage<TProps> = () => {
                                                 color="primary"
                                             />
                                         }
-                                        label="Remember me"
+                                        label={t('Remember me')}
                                     />
                                 )}
                             />
@@ -375,7 +353,7 @@ const LoginPage: NextPage<TProps> = () => {
                                 disabled={loading}
                                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
                             >
-                                {loading ? 'Signing in...' : 'Sign in'}
+                                {loading ? t('Signing in...') : t('Sign in')}
                             </Button>
 
                             <MuiLink
@@ -384,11 +362,11 @@ const LoginPage: NextPage<TProps> = () => {
                                 variant="body2"
                                 sx={{ alignSelf: 'center', fontWeight: 600, textDecoration: 'none' }}
                             >
-                                Forgot your password?
+                                {t('Forgot your password?')}
                             </MuiLink>
                         </Box>
 
-                        <Divider sx={{ my: 2.5 }}>or sign in with</Divider>
+                        <Divider sx={{ my: 2.5 }}>{t('or sign in with')}</Divider>
 
                         <Box
                             sx={{
@@ -439,7 +417,7 @@ const LoginPage: NextPage<TProps> = () => {
                             }}
                         >
                             <Typography variant="body2" color="text.secondary">
-                                Don't have an account?
+                                {t("Don't have an account?")}
                             </Typography>
                             <MuiLink
                                 component={Link}
@@ -447,7 +425,7 @@ const LoginPage: NextPage<TProps> = () => {
                                 variant="body2"
                                 sx={{ fontWeight: 600 }}
                             >
-                                Sign up
+                                {t('Sign up')}
                             </MuiLink>
                         </Box>
                     </Box>

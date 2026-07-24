@@ -6,10 +6,10 @@ import IconButton from '@mui/material/IconButton'
 import { Icon } from '@iconify/react'
 
 interface RoleItem {
-    id: string | number
-    code: string
+    _id: string | number
+    id?: string | number
     name: string
-    description?: string
+    permissions?: string[]
 }
 
 interface CardOptionalProps {
@@ -30,12 +30,13 @@ const CardOptional: React.FC<CardOptionalProps> = ({ roles, selectedRoleId, onSe
             }}
         >
             {roles.map((role) => {
-                const isSelected = selectedRoleId === role.id
+                const roleId = role._id || role.id
+                const isSelected = selectedRoleId === roleId
 
                 return (
                     <Card
-                        key={role.id}
-                        onClick={() => onSelectRole(role.id)}
+                        key={roleId}
+                        onClick={() => onSelectRole(roleId || '')}
                         sx={{
                             p: 3,
                             cursor: 'pointer',
@@ -51,12 +52,11 @@ const CardOptional: React.FC<CardOptionalProps> = ({ roles, selectedRoleId, onSe
                             },
                         }}
                     >
-                        {/* Nút xóa nhanh góc trên bên phải Card */}
                         <IconButton
                             size='small'
                             color='error'
                             onClick={(e) => {
-                                e.stopPropagation() // 👈 Ngăn chặn sự kiện click lan ra Card bên ngoài
+                                e.stopPropagation()
                                 onDeleteRole(role, e)
                             }}
                             sx={{
@@ -70,14 +70,11 @@ const CardOptional: React.FC<CardOptionalProps> = ({ roles, selectedRoleId, onSe
                             <Icon icon='mdi:close' width={16} height={16} />
                         </IconButton>
 
-                        <Typography variant='subtitle2' sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, pr: 3 }}>
-                            {role.code}
-                        </Typography>
                         <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, pr: 3 }}>
                             {role.name}
                         </Typography>
-                        <Typography variant='body2' noWrap sx={{ color: 'text.secondary' }}>
-                            {role.description || 'Không có mô tả'}
+                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                            {role.permissions?.length ? `${role.permissions.length} quyền hạn` : 'Chưa có quyền'}
                         </Typography>
                     </Card>
                 )

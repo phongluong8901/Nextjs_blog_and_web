@@ -1,13 +1,16 @@
 // ** React Imports
 import React, { ReactNode } from 'react'
 
+// ** i18n Hook
+import { useTranslation } from 'react-i18next'
+
 // ** MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import CardActions from '@mui/material/CardActions'
 import Divider from '@mui/material/Divider'
-import { SxProps, Theme } from '@mui/material/styles'
+import { SxProps, Theme, useTheme } from '@mui/material/styles'
 
 export interface CustomCardProps {
     title?: string | ReactNode
@@ -20,6 +23,8 @@ export interface CustomCardProps {
     headerSx?: SxProps<Theme>
     footerSx?: SxProps<Theme>
     showDivider?: boolean
+    titleKey?: string
+    subheaderKey?: string
 }
 
 const CustomCard = ({
@@ -33,23 +38,32 @@ const CustomCard = ({
     headerSx = {},
     footerSx = {},
     showDivider = false,
+    titleKey,
+    subheaderKey,
 }: CustomCardProps) => {
+    const theme = useTheme()
+    const { t } = useTranslation()
+
+    // Xử lý dịch i18n nếu có key truyền vào
+    const renderedTitle = titleKey ? t(titleKey) : title
+    const renderedSubheader = subheaderKey ? t(subheaderKey) : subheader
+
     return (
         <Card
             sx={{
                 borderRadius: 2,
-                boxShadow: (theme) => theme.shadows[3],
-                backgroundColor: (theme) => theme.palette.background.paper,
+                boxShadow: theme.shadows[3],
+                backgroundColor: theme.palette.background.paper,
                 ...cardSx,
             }}
         >
-            {(title || subheader || action) && (
+            {(renderedTitle || renderedSubheader || action) && (
                 <>
                     <CardHeader
-                        title={title}
-                        subheader={subheader}
+                        title={renderedTitle}
+                        subheader={renderedSubheader}
                         action={action}
-                        titleTypographyNames={{ variant: 'h6', fontWeight: 600 }}
+                        titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
                         sx={{
                             p: 3,
                             '& .MuiCardHeader-content': { overflow: 'hidden' },

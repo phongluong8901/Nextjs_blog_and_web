@@ -1,32 +1,34 @@
 import React, { useMemo } from 'react'
 import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
 import Chip, { ChipProps } from '@mui/material/Chip'
+import Typography from '@mui/material/Typography'
 import { GridColDef } from '@mui/x-data-grid'
 import GridEdit from 'src/components/gird-edit'
 import GridDelete from 'src/components/grid-delete'
 import CustomDataGrid from 'src/components/custom-data-grid'
+import CustomPagination from 'src/components/custom-pagnition' // Import CustomPagination của bạn
+import { useTheme } from '@mui/material/styles'
 
 interface GridTableProps {
     rows: any[]
     loading?: boolean
     onEdit: (row: any) => void
     onDelete: (row: any) => void
-
-    // Bổ sung thêm props phân trang nếu component cha cần kiểm soát
     page?: number
     pageSize?: number
     onPageChange?: (newPage: number) => void
     onPageSizeChange?: (newPageSize: number) => void
 }
 
-// 🎨 Hàm helper quyết định màu của Chip (chuẩn hóa kiểu trả về khớp với MUI ChipProps['color'])
-const getRoleColor = (code: string): ChipProps['color'] => {
-    switch (code?.toUpperCase()) {
+const getRoleColor = (name: string): ChipProps['color'] => {
+    switch (name?.toUpperCase()) {
         case 'ADMIN':
             return 'error'
         case 'MANAGER':
             return 'warning'
         case 'USER':
+        case 'BASIC':
             return 'info'
         default:
             return 'default'
@@ -43,14 +45,15 @@ const GridTable: React.FC<GridTableProps> = ({
     onPageChange,
     onPageSizeChange,
 }) => {
-    // Dùng useMemo để tối ưu render cột
+    const theme = useTheme()
+
     const columns: GridColDef[] = useMemo(
         () => [
-            { field: 'id', headerName: 'ID', width: 80 },
+            { field: '_id', headerName: 'ID', width: 220 },
             {
-                field: 'code',
-                headerName: 'Mã vai trò',
-                width: 160,
+                field: 'name',
+                headerName: 'Tên vai trò',
+                width: 180,
                 renderCell: (params) => (
                     <Chip
                         label={params.value || ''}
@@ -61,12 +64,23 @@ const GridTable: React.FC<GridTableProps> = ({
                     />
                 ),
             },
-            { field: 'name', headerName: 'Tên vai trò', flex: 1, minWidth: 180 },
-            { field: 'description', headerName: 'Mô tả', flex: 1.5, minWidth: 220 },
+            {
+                field: 'permissions',
+                headerName: 'Quyền hạn',
+                flex: 1,
+                minWidth: 250,
+                renderCell: (params) => (
+                    <Typography variant="body2" noWrap sx={{ color: 'text.secondary' }}>
+                        {Array.isArray(params.value) && params.value.length > 0
+                            ? params.value.join(', ')
+                            : 'Không có quyền'}
+                    </Typography>
+                ),
+            },
             {
                 field: 'actions',
                 headerName: 'Hành động',
-                width: 120,
+                width: 100,
                 sortable: false,
                 filterable: false,
                 align: 'center',
@@ -83,18 +97,32 @@ const GridTable: React.FC<GridTableProps> = ({
     )
 
     return (
-        <CustomDataGrid
-            rows={rows}
-            columns={columns}
-            loading={loading}
-            height={500}
-            pagination
-            pageSize={pageSize}
-            rowsPerPageOptions={[10, 25, 50]}
-            {...(page !== undefined && { page })}
-            {...(onPageChange && { onPageChange })}
-            {...(onPageSizeChange && { onPageSizeChange })}
-        />
+        <Card
+            sx={{
+                p: 3,
+                backgroundColor: theme.palette.background.paper,
+                height: '100%',
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.shadows[1]
+            }}
+        >
+            <CustomDataGrid
+                rows={rows}
+                columns={columns}
+                loading={loading}
+                getRowId={(row) => row._id || row.id}
+                height={460}
+                pagination
+                pageSize={pageSize}
+                pageSizeOptions={[5, 10, 20, 50, 100]}
+                {...(page !== undefined && { page })}
+                {...(onPageChange && { onPageChange })}
+                {...(onPageSizeChange && { onPageSizeChange })}
+                slots={{
+                    pagination: CustomPagination
+                }}
+            />
+        </Card>
     )
 }
 

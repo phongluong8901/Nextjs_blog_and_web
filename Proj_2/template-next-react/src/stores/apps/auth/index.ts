@@ -1,9 +1,10 @@
 // ** Redux Imports
 import { createSlice } from '@reduxjs/toolkit'
-import { registerUser, loginUser, updateAuthMeAsync, getAuthMeAsync } from './actions'
+import { registerUser, loginUser, updateAuthMeAsync, getAuthMeAsync, changePassword } from './actions'
+import { TUserEntity } from 'src/types/auth'
 
 interface AuthState {
-  user: null | { [key: string]: any }
+  user: TUserEntity | null
   token: string | null
   loading: boolean
   error: string | null
@@ -74,16 +75,10 @@ export const authSlice = createSlice({
 
     // --- Xử lý Update Me ---
     builder
-      .addCase(updateAuthMeAsync.pending, state => {
-        state.loading = true
-        state.error = null
-      })
       .addCase(updateAuthMeAsync.fulfilled, (state, action) => {
-        state.loading = false
         state.user = action.payload.data || action.payload.user || action.payload
       })
       .addCase(updateAuthMeAsync.rejected, (state, action: any) => {
-        state.loading = false
         state.error = action.payload?.message || 'Cập nhật thông tin thất bại'
       })
 
@@ -100,6 +95,20 @@ export const authSlice = createSlice({
       .addCase(getAuthMeAsync.rejected, (state, action: any) => {
         state.loading = false
         state.error = action.payload?.message || 'Lấy thông tin thất bại'
+      })
+
+    // --- Xử lý Change Password ---
+    builder
+      .addCase(changePassword.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(changePassword.fulfilled, state => {
+        state.loading = false
+      })
+      .addCase(changePassword.rejected, (state, action: any) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Đổi mật khẩu thất bại'
       })
   }
 })

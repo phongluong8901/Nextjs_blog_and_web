@@ -1,10 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 // ** Import các utilities từ Next.js
 import { NextPage } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
+
+// ** Import i18n Hook
+import { useTranslation } from 'react-i18next'
+
+// ** Import Toast library
+import toast from 'react-hot-toast'
 
 // ** Import thư viện quản lý Form và Validation Schema (Yup)
 import { useForm, Controller } from 'react-hook-form'
@@ -20,25 +26,23 @@ import {
     Button,
     FormControl,
     FormLabel,
-    IconButton,
     Link as MuiLink,
     Typography,
     Card as MuiCard,
     styled,
     useTheme,
     CircularProgress,
-    Fade,
 } from '@mui/material'
 
 // ** Import Custom Component TextField
 import CustomTextField from 'src/components/text-field'
 
 // ** Import Service gọi API thật
+import { forgotPasswordAuth } from 'src/services/auth'
 
 // ** Import ảnh Light / Dark Mode
 import ForgotDark from '/public/images/register-dark.png'
 import ForgotLight from '/public/images/register-light.png'
-import { forgotPasswordAuth } from 'src/services/auth'
 
 const MainStackedCard = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -67,14 +71,13 @@ const schema = yup.object().shape({
 type TFormData = yup.InferType<typeof schema>
 
 const ForgotPasswordPage: NextPage<TProps> = () => {
-    const [openAlert, setOpenAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success')
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState<boolean>(false)
+
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
 
     const router = useRouter()
     const theme = useTheme()
-
+    const { t } = useTranslation()
 
     const {
         control,
@@ -88,29 +91,36 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
         resolver: yupResolver(schema),
     })
 
+    // Dọn dẹp timer khi unmount component
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [])
+
     const onSubmit = async (data: TFormData) => {
         try {
             setLoading(true)
             const response = await forgotPasswordAuth({ email: data.email })
 
-            setAlertSeverity('success')
-            setAlertMessage(response?.message || 'Link khôi phục mật khẩu đã được gửi vào email của bạn. Vui lòng kiểm tra hộp thư!')
-            setOpenAlert(true)
+            const successMessage =
+                response?.message ||
+                t(
+                    'Auth.ForgotPassword.SuccessMessage',
+                    'Link khôi phục mật khẩu đã được gửi vào email của bạn. Vui lòng kiểm tra hộp thư!'
+                )
+            toast.success(successMessage)
 
-            setTimeout(() => {
+            timerRef.current = setTimeout(() => {
                 router.push('/login')
             }, 3000)
-
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.message || 'Gửi yêu cầu thất bại. Vui lòng thử lại!'
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                t('Auth.ForgotPassword.ErrorMessage', 'Gửi yêu cầu thất bại. Vui lòng thử lại!')
 
-            setAlertSeverity('error')
-            setAlertMessage(errorMessage)
-            setOpenAlert(true)
-
-            setTimeout(() => {
-                setOpenAlert(false)
-            }, 4000)
+            toast.error(errorMessage)
         } finally {
             setLoading(false)
         }
@@ -132,47 +142,6 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                 position: 'relative',
             }}
         >
-            {/* Custom Toast Alert */}
-            <Fade in={openAlert}>
-                <Box
-                    sx={{
-                        position: 'fixed',
-                        top: 24,
-                        right: 24,
-                        zIndex: 9999,
-                        display: openAlert ? 'flex' : 'none',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        padding: '14px 20px',
-                        backgroundColor: alertSeverity === 'success' ? '#2e7d32' : '#d32f2f',
-                        color: '#fff',
-                        borderRadius: '10px',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                        fontWeight: 500,
-                        fontSize: '14px',
-                        minWidth: '280px',
-                    }}
-                >
-                    <Icon
-                        icon={
-                            alertSeverity === 'success'
-                                ? 'mdi:check-circle-outline'
-                                : 'mdi:alert-circle-outline'
-                        }
-                        width={22}
-                        height={22}
-                    />
-                    <Box sx={{ flex: 1 }}>{alertMessage}</Box>
-                    <IconButton
-                        size="small"
-                        onClick={() => setOpenAlert(false)}
-                        sx={{ color: '#fff', padding: '2px' }}
-                    >
-                        <Icon icon="mdi:close" width={18} height={18} />
-                    </IconButton>
-                </Box>
-            </Fade>
-
             <MainStackedCard>
                 {/* Cột hình ảnh minh họa bên trái */}
                 <Box
@@ -224,14 +193,17 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                             variant="h4"
                             sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}
                         >
-                            Forgot Password? 🔒
+                            {t('Auth.ForgotPassword.Title', 'Forgot Password?')} 🔒
                         </Typography>
                         <Typography
                             variant="body2"
                             color="text.secondary"
                             sx={{ mb: 3 }}
                         >
-                            Enter your email and we'll send you instructions to reset your password
+                            {t(
+                                'Auth.ForgotPassword.Subtitle',
+                                "Enter your email and we'll send you instructions to reset your password"
+                            )}
                         </Typography>
 
                         <Box
@@ -246,7 +218,9 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                             }}
                         >
                             <FormControl fullWidth error={Boolean(errors.email)}>
-                                <FormLabel htmlFor="email">Email</FormLabel>
+                                <FormLabel htmlFor="email">
+                                    {t('Auth.ForgotPassword.Email', 'Email')}
+                                </FormLabel>
                                 <Controller
                                     name="email"
                                     control={control}
@@ -255,13 +229,15 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                                             {...field}
                                             id="email"
                                             type="email"
-                                            placeholder="your@email.com"
+                                            placeholder={t(
+                                                'Auth.ForgotPassword.EmailPlaceholder',
+                                                'your@email.com'
+                                            )}
                                             autoComplete="email"
                                             autoFocus
                                             fullWidth
                                             error={Boolean(errors.email)}
                                             helperText={errors.email?.message}
-                                            color={errors.email ? 'error' : 'primary'}
                                         />
                                     )}
                                 />
@@ -273,10 +249,14 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                                 variant="contained"
                                 size="large"
                                 disabled={loading}
-                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                                startIcon={
+                                    loading ? <CircularProgress size={20} color="inherit" /> : null
+                                }
                                 sx={{ mt: 1 }}
                             >
-                                {loading ? 'Sending...' : 'Send reset link'}
+                                {loading
+                                    ? t('Auth.ForgotPassword.Sending', 'Sending...')
+                                    : t('Auth.ForgotPassword.SubmitButton', 'Send reset link')}
                             </Button>
                         </Box>
 
@@ -302,7 +282,7 @@ const ForgotPasswordPage: NextPage<TProps> = () => {
                                 }}
                             >
                                 <Icon icon="mdi:chevron-left" width={20} height={20} />
-                                Back to login
+                                {t('Auth.ForgotPassword.BackToLogin', 'Back to login')}
                             </MuiLink>
                         </Box>
                     </Box>
