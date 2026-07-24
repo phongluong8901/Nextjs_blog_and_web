@@ -1,0 +1,20 @@
+--- teamplte cho pages
+https://mui.com/material-ui/getting-started/templates/
+
+-signin
+https://github.com/mui/material-ui/tree/v9.2.0/docs/data/material/getting-started/templates/sign-in
+
+
+- icons
+https://icon-sets.iconify.design/
+
+
+--- lenh check folder, file trong du an, xem chuan Seo k
+Get-ChildItem -Recurse | Where-Object { $_.FullName -notmatch '\\node_modules|\\.next|\\.git' } | ForEach-Object {
+    $indent = "  " * ($_.FullName.Split('\').Count - (Get-Item .).FullName.Split('\').Count)
+    if ($_.PSIsContainer) {
+        "$indent📂 $($_.Name)"
+    } else {
+        "$indent📄 $($_.Name)"
+    }
+}

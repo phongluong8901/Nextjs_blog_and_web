@@ -5,10 +5,11 @@ import { Skin } from 'src/types/layouts'
 const DefaultPalette = (mode: Palette['mode'], skin: Skin): Palette => {
   // ** Vars
   const whiteColor = '#FFF'
-  const lightColor = '47, 43, 61'
-  const darkColor = '208, 212, 241'
+  const lightColorChannels = '47, 43, 61'
+  const darkColorChannels = '208, 212, 241'
   const darkPaperBgColor = '#2F3349'
-  const mainColor = mode === 'light' ? lightColor : darkColor
+
+  const mainColorChannels = mode === 'light' ? lightColorChannels : darkColorChannels
 
   const defaultBgColor = () => {
     if (skin === 'bordered' && mode === 'light') {
@@ -22,12 +23,12 @@ const DefaultPalette = (mode: Palette['mode'], skin: Skin): Palette => {
 
   return {
     customColors: {
-      dark: darkColor,
-      main: mainColor,
-      light: lightColor,
+      dark: `rgb(${darkColorChannels})`,
+      main: `rgb(${mainColorChannels})`,
+      light: `rgb(${lightColorChannels})`,
       lightPaperBg: whiteColor,
       darkPaperBg: darkPaperBgColor,
-      bodyBg: mode === 'light' ? '#F8F7FA' : '#25293C', // Same as palette.background.default but doesn't consider bordered skin
+      bodyBg: mode === 'light' ? '#F8F7FA' : '#25293C',
       trackBg: mode === 'light' ? '#F1F0F2' : '#363B54',
       avatarBg: mode === 'light' ? '#DBDADE' : '#4A5072',
       tableHeaderBg: mode === 'light' ? '#F6F6F7' : '#4A5072'
@@ -90,23 +91,23 @@ const DefaultPalette = (mode: Palette['mode'], skin: Skin): Palette => {
       A700: '#616161'
     },
     text: {
-      primary: `rgba(${mainColor}, 0.78)`,
-      secondary: `rgba(${mainColor}, 0.68)`,
-      disabled: `rgba(${mainColor}, 0.42)`
+      primary: `rgba(${mainColorChannels}, 0.78)`,
+      secondary: `rgba(${mainColorChannels}, 0.68)`,
+      disabled: `rgba(${mainColorChannels}, 0.42)`
     },
-    divider: `rgba(${mainColor}, 0.16)`,
+    divider: `rgba(${mainColorChannels}, 0.16)`,
     background: {
       paper: mode === 'light' ? whiteColor : darkPaperBgColor,
       default: defaultBgColor()
     },
     action: {
-      active: `rgba(${mainColor}, 0.54)`,
-      hover: `rgba(${mainColor}, 0.04)`,
-      selected: `rgba(${mainColor}, 0.06)`,
+      active: `rgba(${mainColorChannels}, 0.54)`,
+      hover: `rgba(${mainColorChannels}, 0.04)`,
+      selected: `rgba(${mainColorChannels}, 0.06)`,
       selectedOpacity: 0.06,
-      disabled: `rgba(${mainColor}, 0.26)`,
-      disabledBackground: `rgba(${mainColor}, 0.12)`,
-      focus: `rgba(${mainColor}, 0.12)`
+      disabled: `rgba(${mainColorChannels}, 0.26)`,
+      disabledBackground: `rgba(${mainColorChannels}, 0.12)`,
+      focus: `rgba(${mainColorChannels}, 0.12)`
     }
   } as Palette
 }

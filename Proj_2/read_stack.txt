@@ -1,0 +1,155 @@
+Nhờ cơ chế File-based Routing mặc định của Next.js (dành cho pages directory), cấu trúc thư mục của bạn sẽ tự động mapping thành đường dẫnURL.
+
+Cấu trúc thư mục tương ứng:
+Để truy cập vào http://localhost:3000/login, bạn chỉ cần sắp xếp file theo một trong hai cách sau:
+
+Cách 1: Tạo file login.tsx trực tiếp (Đơn giản nhất)
+Plaintext
+
+
+my-project/
+└── src/
+    ├── pages/
+    │   ├── index.tsx          --> http://localhost:3000/
+    │   └── login.tsx          --> http://localhost:3000/login  (File Login của bạn ở đây)
+    └── views/
+        └── pages/
+            └── login/
+                └── index.tsx  --> Component giao diện (LoginPage)
+Cách 2: Tạo folder login/index.tsx
+Plaintext
+
+
+my-project/
+└── src/
+    ├── pages/
+    │   ├── index.tsx          --> http://localhost:3000/
+    │   └── login/
+    │       └── index.tsx      --> http://localhost:3000/login  (File Login của bạn ở đây)
+    └── views/
+        └── pages/
+            └── login/
+                └── index.tsx  --> Component giao diện (LoginPage)
+
+
+-------- redux thunk
+Redux Thunk là một middleware phổ biến trong Redux (được tích hợp sẵn trong Redux Toolkit qua hàm configureStore), dùng để giải quyết một bài toán cốt lõi: Xử lý các tác vụ bất đồng bộ (như gọi API, lấy dữ liệu, setTimeout, v.v.) bên trong Redux.
+
+Tại sao lại cần Redux Thunk?
+Mặc định, các Redux reducer phải là hàm thuần túy (pure functions): chỉ nhận vào state và action, sau đó trả về state mới mà tuyệt đối không được chứa code bất đồng bộ (như gọi axios.get, fetch, đọc ghi file trực tiếp tại thời điểm reduce) hay tạo side effects.
+
+Tuy nhiên, trong ứng dụng thực tế, bạn luôn phải gọi API để lấy dữ liệu từ server rồi mới cập nhật vào Redux Store. Redux Thunk sinh ra để làm chiếc cầu nối đó.
+
+--- tai sao la redux ma khong phai localstore
+Câu hỏi rất hay! Tại sao khi thay đổi thông tin profile (hoặc trạng thái đăng nhập) xong, người ta thường đưa vào Redux (hoặc Context API / Zustand) chứ không chỉ lưu mỗi vào localStorage?
+
+Sự khác biệt cốt lõi nằm ở khả năng phản ứng tự động của giao diện (Reactivity) và Phạm vi lưu trữ:
+
+1. Vấn đề của localStorage (Tại sao nó không tự đổi giao diện?)
+localStorage giống như một cái ổ cứng tĩnh nằm trong trình duyệt. Nó chỉ là nơi cất giữ dữ liệu dưới dạng chuỗi (string) để không bị mất khi F5 lại trang.
+
+Điểm yếu chết người: localStorage không có cơ chế lắng nghe thay đổi (reactive). Khi bạn dùng câu lệnh localStorage.setItem('user', JSON.stringify(newData)) ở trang Profile, các component khác ở các trang khác (ví dụ như cái Avatar hay Tên ở Header, Sidebar) sẽ không hề hay biết là dữ liệu đã thay đổi.
+
+Kết quả: Header vẫn giữ nguyên hình ảnh và tên cũ. Người dùng phải bấm F5 (tải lại trang) thì trình duyệt mới đọc lại localStorage và cập nhật giao diện. Trải nghiệm này bị giật cục, không mượt mà.
+
+2. Sức mạnh của Redux / Global State (Tại sao nên dùng?)
+Cơ chế phản ứng (Reactivity): Redux quản lý dữ liệu trên bộ nhớ RAM của trình duyệt. Khi bạn gọi hành động cập nhật state (dispatch) dữ liệu mới vào Redux, tất cả các component đang kết nối với Redux (như Header, Sidebar, trang Profile...) sẽ lập tức nhận được tín hiệu, tự động render lại (re-render) để hiển thị dữ liệu mới ngay giây phút đó mà không cần F5.
+
+Quản lý tập trung: Giúp bạn kiểm soát rõ ràng dữ liệu người dùng đang đứng ở trạng thái nào (đã đăng nhập chưa, role gì, token là gì) xuyên suốt toàn bộ vòng đời của ứng dụng.
+
+
+--- tai sao get Auth Me cung dung redux
+Việc đưa cả lệnh GET (lấy dữ liệu như getAuthMe) vào Redux thay vì chỉ gọi trực tiếp bằng useEffect ở từng component mang lại những lợi ích cực kỳ lớn sau:
+
+1. Đồng bộ hóa dữ liệu toàn cục (Single Source of Truth)
+Khi bạn lấy thông tin user thông qua Redux, dữ liệu user đó sẽ được lưu ở kho chứa chung của toàn ứng dụng.
+
+Bất kỳ component nào (Trang MyProfile, Component Header hiển thị avatar, Component Sidebar hiển thị tên, hay trang quản trị...) cũng đều có thể đọc chung một nguồn dữ liệu này mà không cần phải gọi lại API nhiều lần.
+
+2. Tránh việc gọi API lặp lại (Trùng lặp request)
+Nếu mỗi trang tự gọi một kiểu bằng useEffect riêng, khi người dùng chuyển qua lại giữa các trang (từ trang chủ sang trang Profile, rồi sang trang Cài đặt...), ứng dụng sẽ phải gọi lại API getMe liên tục rất tốn resource và chậm.
+
+Khi đưa vào Redux, bạn chỉ cần gọi 1 lần (ví dụ lúc app vừa khởi động hoặc lúc mới đăng nhập xong), các trang sau chỉ việc lấy dữ liệu từ Redux ra dùng, giao diện hiện lên ngay lập tức mà không có độ trễ chờ đợi mạng.
+
+3. Quản lý trạng thái tải (Loading) và Lỗi (Error) tập trung
+Redux hỗ trợ sẵn các trạng thái pending (đang tải), fulfilled (thành công), rejected (thất bại).
+
+Bạn có thể dễ dàng hiển thị khung Skeleton loading hoặc vòng quay xoay vòng (Spinner) ở bất cứ đâu trong app khi Redux đang ở trạng thái loading = true.
+
+--- cookie, localstorage, redux
+# Phân biệt Cookie, LocalStorage và Redux
+
+## Bảng so sánh tổng quan
+
+| Tiêu chí | Cookie | LocalStorage | Redux |
+| :--- | :--- | :--- | :--- |
+| **Bản chất** | Dữ liệu lưu trữ trên trình duyệt, tự động gửi lên server trong mỗi HTTP request. | Dữ liệu lưu trữ cục bộ trên trình duyệt (Client-side storage). | Thư viện quản lý trạng thái (State Management) nằm trong **bộ nhớ RAM** (JavaScript memory) của ứng dụng. |
+| **Phạm vi (Scope)** | Theo tên miền (Domain) và đường dẫn (Path). Có thể chia sẻ giữa client và server. | Theo tên miền (Domain). Chỉ tồn tại ở phía client. | Chỉ tồn tại trong vòng đời của ứng dụng React/JS đang chạy (F5 là mất). |
+| **Dung lượng lưu trữ** | Rất nhỏ (tối đa khoảng **4KB**). | Khá lớn (thường khoảng **5MB** đến **10MB** tùy trình duyệt). | Phụ thuộc vào bộ nhớ RAM của thiết bị (lớn nhưng không nên lạm dụng). |
+| **Thời gian sống (Lifespan)** | Có thể cấu hình thời gian hết hạn (`Expires` / `Max-Age`). Nếu không đặt, sẽ mất khi đóng trình duyệt (Session Cookie). | Tồn tại vĩnh viễn cho đến khi người dùng/code chủ động xóa (`localStorage.removeItem()`). | Mất đi khi người dùng tải lại trang (F5) hoặc đóng tab (trừ khi kết hợp với `redux-persist` để lưu xuống LocalStorage). |
+| **Bảo mật** | Có thể bảo vệ bằng các cờ như `HttpOnly`, `Secure`, `SameSite` để chống XSS và CSRF. | Dễ bị tổn thương trước tấn công **XSS** (bất kỳ đoạn mã JS nào chạy trên trang cũng đọc được). | An toàn trước các script bên ngoài, nhưng dữ liệu nhạy cảm vẫn cần cẩn trọng nếu lưu trữ lâu dài. |
+| **Mục đích sử dụng chính** | Xác thực người dùng (Authentication/Session ID), theo dõi (tracking), lưu trữ thông tin nhỏ cần gửi về server. | Lưu trữ cấu hình giao diện người dùng (theme sáng/tối), giỏ hàng tạm thời, token (nếu không quá khắt khe về bảo mật). | Quản lý trạng thái phức tạp dùng chung cho nhiều component (UI state, dữ liệu gọi từ API). |
+
+---
+
+## Chi tiết từng khái niệm
+
+### 1. Cookie
+* **Hoạt động:** Mỗi khi trình duyệt gửi một HTTP request đến server, toàn bộ Cookie hợp lệ của tên miền đó sẽ được đính kèm tự động trong header `Cookie`.
+* **Điểm nổi bật:** Là cơ chế duy nhất trong ba cái có khả năng giao tiếp trực tiếp với server qua HTTP headers.
+* **Ví dụ:** Lưu mã phiên đăng nhập (`session_id`) hoặc lưu trạng thái đồng ý cho phép sử dụng cookie của người dùng.
+
+### 2. LocalStorage
+* **Hoạt động:** Lưu trữ dữ liệu dạng key-value (dưới dạng chuỗi string) trực tiếp trên trình duyệt của người dùng.
+* **Điểm nổi bật:** Dung lượng lớn, lưu trữ bền vững ngay cả khi tắt trình duyệt hoặc tắt máy tính.
+* **Ví dụ:** Lưu chế độ giao diện (Dark Mode / Light Mode), ngôn ngữ hiển thị mặc định của người dùng (`vi`, `en`).
+
+### 3. Redux
+* **Hoạt động:** Quản lý dữ liệu tập trung (Store) trong bộ nhớ JavaScript của ứng dụng frontend (thường dùng với React). Các component có thể đọc (`useSelector`) và thay đổi (`useDispatch`) dữ liệu này.
+* **Điểm nổi bật:** Giúp đồng bộ hóa dữ liệu giữa các component phức tạp dễ dàng hơn, cung cấp cơ chế theo dõi thay đổi trạng thái (debugging tốt).
+* **Ví dụ:** Lưu danh sách sản phẩm trong giỏ hàng, thông tin profile của user sau khi đăng nhập thành công để hiển thị lên giao diện.
+
+---
+
+## Khi nào nên dùng cái nào?
+* Dùng **Cookie** khi bạn cần lưu thông tin **bắt buộc phải gửi lên server** (như token xác thực để kiểm tra quyền hạn).
+* Dùng **LocalStorage** khi bạn muốn **lưu trữ lâu dài** một lượng dữ liệu vừa phải ở phía client mà không cần gửi lên server mỗi lần request.
+* Dùng **Redux** khi bạn cần **quản lý trạng thái tương tác** phức tạp trong nội bộ ứng dụng ở client trong thời gian thực.
+
+------ khi dung rememberME -> luu tu sesionstorage sang localstorage
+# Hướng dẫn phân biệt và sử dụng các loại Storage trong lập trình Web
+
+Trong lập trình web, các bộ lưu trữ phía client có các mục đích và đặc điểm riêng. Dưới đây là bảng phân loại chi tiết giúp ông dễ dàng nhận biết **khi nào nên dùng cái nào**:
+
+## 1. Bảng so sánh chi tiết các loại Storage
+
+| Loại Storage | Dung lượng tối đa | Thời gian sống (Expiration) | Phạm vi truy cập (Scope) | Dùng để làm gì? |
+| :--- | :--- | :--- | :--- | :--- |
+| **LocalStorage** | ~5MB - 10MB | **Vĩnh viễn** (Chỉ mất khi người dùng tự xóa hoặc code xóa) | Cùng Origin (chung domain, protocol, port) | Lưu các cài đặt cá nhân hóa (Dark/Light mode, ngôn ngữ), token đăng nhập khi chọn "Nhớ mật khẩu", giỏ hàng tạm thời. |
+| **SessionStorage** | ~5MB - 10MB | **Theo phiên** (Tự động xóa khi đóng tab hoặc đóng trình duyệt) | Theo từng tab/window riêng biệt | Lưu trạng thái form dang dở, dữ liệu tạm thời chỉ dùng trong 1 luồng làm việc của tab đó. |
+| **Cookies** | ~4KB | **Tùy chỉnh** (Do server hoặc client đặt thời gian hết hạn `Expires`) | Theo domain (có thể cấu hình chia sẻ cho sub-domain) | Lưu trữ các thông tin **bắt buộc phải gửi lên Server** qua HTTP Header (ví dụ: Refresh Token dạng `HttpOnly`, mã xác thực phiên đăng nhập bảo mật, tracking ID). |
+
+---
+
+## 2. Hướng dẫn nhanh: Khi nào dùng cái nào?
+
+### 📌 Dùng `LocalStorage` khi:
+* Ông muốn dữ liệu **vẫn còn nguyên** ngay cả khi người dùng tắt hẳn trình duyệt, tắt máy tính rồi bật lại hôm sau.
+* **Ví dụ thực tế:** 
+  * Lưu cấu hình giao diện (Dark/Light mode).
+  * Lưu token đăng nhập khi người dùng tích chọn "Nhớ mật khẩu" (Remember me).
+
+### 📌 Dùng `SessionStorage` khi:
+* Ông chỉ cần lưu dữ liệu **trong lúc user đang thao tác ở tab đó**, và muốn **tự động dọn sạch** khi họ tắt tab đi để không bị rác dữ liệu hay lẫn lộn giữa các tab với nhau.
+* **Ví dụ thực tế:** 
+  * Người dùng mở nhiều tab mua hàng khác nhau, mỗi tab có một bước thanh toán hoặc dữ liệu form tạm riêng biệt không muốn bị ảnh hưởng lẫn nhau.
+
+### 📌 Dùng `Cookies` khi:
+* Ông cần gửi dữ liệu đó **về cho Backend (Server)** ở mọi request HTTP. Rất quan trọng đối với các token bảo mật cao (như `HttpOnly Cookie` để chống tấn công XSS, hoặc lưu thông tin xác thực phiên làm việc phía server).
+* **Ví dụ thực tế:** 
+  * Lưu Refresh Token bảo mật cao mà mã độc JavaScript phía client không được phép đọc trực tiếp.
+
+--- deboune cho serch
+Hook useDebounce trong hình dùng để trì hoãn việc cập nhật giá trị cho đến khi người dùng ngừng thay đổi giá trị đó trong một khoảng thời gian (delay) nhất định.
+
+Ứng dụng phổ biến nhất: Dùng cho thanh tìm kiếm (Search Input). Thay vì cứ mỗi lần người dùng gõ một chữ cái là gọi API tìm kiếm ngay lập tức (gây quá tải server), hook này sẽ đợi người dùng dừng gõ hẳn (ví dụ sau 500ms) thì mới cập nhật giá trị để gọi API một lần duy nhất.

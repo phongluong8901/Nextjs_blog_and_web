@@ -23,12 +23,15 @@ const themeOptions = (settings: Settings, overrideMode: PaletteMode): ThemeOptio
   // ** Create New object before removing user component overrides and typography objects from userThemeOptions
   const userThemeConfig: ThemeOptions = Object.assign({}, UserThemeOptions())
 
+  const currentMode = mode === 'system' ? 'light' : mode
+  const resolvedMode = currentMode === 'semi-dark' ? overrideMode : currentMode
+
   const mergedThemeConfig: ThemeOptions = deepmerge(
     {
       breakpoints: breakpoints(),
       direction,
       components: overrides(settings),
-      palette: palette(mode === 'semi-dark' ? overrideMode : mode, skin),
+      palette: palette(resolvedMode, skin),
       ...spacing,
       shape: {
         borderRadius: 6
@@ -38,7 +41,7 @@ const themeOptions = (settings: Settings, overrideMode: PaletteMode): ThemeOptio
           minHeight: 64
         }
       },
-      shadows: shadows(mode === 'semi-dark' ? overrideMode : mode),
+      shadows: shadows(resolvedMode),
       typography
     },
     userThemeConfig
@@ -47,9 +50,7 @@ const themeOptions = (settings: Settings, overrideMode: PaletteMode): ThemeOptio
   return deepmerge(mergedThemeConfig, {
     palette: {
       primary: {
-        ...(mergedThemeConfig.palette
-          ? mergedThemeConfig.palette?.[themeColor]
-          : palette(mode === 'semi-dark' ? overrideMode : mode, skin).primary)
+        ...(mergedThemeConfig.palette ? mergedThemeConfig.palette?.[themeColor] : palette(resolvedMode, skin).primary)
       }
     }
   })
